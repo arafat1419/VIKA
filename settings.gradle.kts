@@ -20,5 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "VIKA"
-include(":app")
+include(":sample-app")
 include(":VikaSDK")
