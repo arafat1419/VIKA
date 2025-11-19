@@ -12,8 +12,11 @@ import com.vika.sdk.models.NavigationResult
 import com.vika.sdk.models.NavigationType
 import com.vika.sdk.models.SDKConfig
 import com.vika.sdk.models.ScreenRegistration
+import com.vika.sdk.models.VikaDisplayMode
 import com.vika.sdk.models.VikaError
+import com.vika.sdk.models.VikaLanguage
 import com.vika.sdk.models.VikaResult
+import com.vika.sdk.models.VikaUIOptions
 import com.vika.sdk.navigation.DeepLinkNavigationHandler
 import com.vika.sdk.navigation.NavigationHandler
 import com.vika.sdk.network.api.SecureNavigationApiClient
@@ -23,6 +26,8 @@ import com.vika.sdk.network.models.RecordingData
 import com.vika.sdk.security.LicenseValidator
 import com.vika.sdk.security.SDKSecurityManager
 import com.vika.sdk.session.SessionManager
+import com.vika.sdk.ui.VikaBottomSheetActivity
+import com.vika.sdk.ui.VikaDialogActivity
 import com.vika.sdk.ui.VikaMainActivity
 import com.vika.sdk.utils.SafeLogger
 import kotlinx.coroutines.CoroutineScope
@@ -122,6 +127,18 @@ class VikaSDK private constructor(
         @SuppressLint("StaticFieldLeak")
         @Volatile
         private var instance: VikaSDK? = null
+
+        @Volatile
+        internal var currentUIOptions: VikaUIOptions? = null
+            private set
+
+        /**
+         * Get current UI options for the SDK UI.
+         *
+         * @return Current UI options or null if not set
+         */
+        @JvmStatic
+        fun getCurrentUIOptions(): VikaUIOptions? = currentUIOptions
 
         /**
          * Initialize the SDK with configuration.
@@ -360,10 +377,31 @@ class VikaSDK private constructor(
     }
 
     /**
-     * Open VikaSDK UI
+     * Open VikaSDK UI with default options.
+     *
+     * @param context Context to start the activity
      */
     fun openVikaSDK(context: Context) {
-        Intent(context, VikaMainActivity::class.java).also { intent ->
+        openVikaSDK(context, VikaUIOptions())
+    }
+
+    /**
+     * Open VikaSDK UI with custom options.
+     *
+     * @param context Context to start the activity
+     * @param options UI customization options including display mode, theme, and branding
+     */
+    fun openVikaSDK(context: Context, options: VikaUIOptions) {
+        // Store options for Activity to access
+        currentUIOptions = options
+
+        val activityClass = when (options.displayMode) {
+            VikaDisplayMode.FULLSCREEN -> VikaMainActivity::class.java
+            VikaDisplayMode.DIALOG -> VikaDialogActivity::class.java
+            VikaDisplayMode.BOTTOM_SHEET -> VikaBottomSheetActivity::class.java
+        }
+
+        Intent(context, activityClass).also { intent ->
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
@@ -470,6 +508,13 @@ class VikaSDK private constructor(
      */
     fun getRegisteredScreens(): List<ScreenRegistration> {
         return registeredScreens.values.toList()
+    }
+
+    /**
+     * Get the configured language for the SDK UI.
+     */
+    fun getLanguage(): VikaLanguage {
+        return config.language
     }
 
     /**

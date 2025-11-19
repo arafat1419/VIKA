@@ -6,6 +6,7 @@ import com.vika.sdk.VikaSDK
 import com.vika.sdk.models.NavigationType
 import com.vika.sdk.models.SDKConfig
 import com.vika.sdk.models.ScreenRegistration
+import com.vika.sdk.models.VikaLanguage
 
 class SampleApplication : Application() {
 
@@ -17,6 +18,7 @@ class SampleApplication : Application() {
             .analyticsEnabled(true)
             .debugMode(BuildConfig.DEBUG)
             .allowedDeepLinkSchemes("sample")
+            .language(VikaLanguage.INDONESIAN)
             .build()
 
         VikaSDK.initialize(

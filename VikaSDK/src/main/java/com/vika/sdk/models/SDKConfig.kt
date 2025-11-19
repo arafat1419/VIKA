@@ -22,6 +22,7 @@ package com.vika.sdk.models
  * @property cacheEnabled Enable local caching of screen registrations
  * @property certificatePinning Certificate pinning configuration for enhanced security
  * @property allowedDeepLinkSchemes Whitelist of allowed deep link schemes
+ * @property language Language for the SDK UI (English or Indonesian)
  */
 class SDKConfig private constructor(
     val apiKey: String,
@@ -32,7 +33,8 @@ class SDKConfig private constructor(
     val maxRetries: Int,
     val cacheEnabled: Boolean,
     val certificatePinning: CertificatePinningConfig?,
-    val allowedDeepLinkSchemes: List<String>
+    val allowedDeepLinkSchemes: List<String>,
+    val language: VikaLanguage
 ) {
     companion object {
         /** Default minimum confidence threshold */
@@ -59,6 +61,7 @@ class SDKConfig private constructor(
         private var cacheEnabled: Boolean = true
         private var certificatePinning: CertificatePinningConfig? = null
         private var allowedDeepLinkSchemes: MutableList<String> = mutableListOf()
+        private var language: VikaLanguage = VikaLanguage.ENGLISH
 
         /**
          * Set minimum confidence threshold for navigation.
@@ -161,6 +164,16 @@ class SDKConfig private constructor(
         }
 
         /**
+         * Set the language for the SDK UI.
+         *
+         * @param language Language to use (ENGLISH or INDONESIAN)
+         * @return This builder for chaining
+         */
+        fun language(language: VikaLanguage) = apply {
+            this.language = language
+        }
+
+        /**
          * Build the [SDKConfig] instance.
          *
          * @return Configured SDKConfig
@@ -178,7 +191,8 @@ class SDKConfig private constructor(
                 maxRetries = maxRetries,
                 cacheEnabled = cacheEnabled,
                 certificatePinning = certificatePinning,
-                allowedDeepLinkSchemes = allowedDeepLinkSchemes.toList()
+                allowedDeepLinkSchemes = allowedDeepLinkSchemes.toList(),
+                language = language
             )
         }
     }
@@ -192,7 +206,8 @@ class SDKConfig private constructor(
                 "maxRetries=$maxRetries, " +
                 "cacheEnabled=$cacheEnabled, " +
                 "certificatePinning=${certificatePinning != null}, " +
-                "allowedDeepLinkSchemes=$allowedDeepLinkSchemes)"
+                "allowedDeepLinkSchemes=$allowedDeepLinkSchemes, " +
+                "language=$language)"
     }
 }
 

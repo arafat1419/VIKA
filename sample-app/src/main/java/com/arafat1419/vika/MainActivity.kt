@@ -32,6 +32,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.vika.sdk.VikaSDK
+import com.vika.sdk.models.VikaDisplayMode
+import com.vika.sdk.models.VikaThemeConfig
+import com.vika.sdk.models.VikaUIOptions
 
 class MainActivity : ComponentActivity() {
 
@@ -169,14 +172,121 @@ fun MainScreen(navController: NavHostController) {
                             Text("Cart")
                         }
                     }
+                }
+            }
 
+            // VIKA SDK Display Modes
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "VIKA Display Modes",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+
+                    // Fullscreen (default)
                     Button(
                         onClick = {
-                            sdk.openVikaSDK(context = context)
+                            val options = VikaUIOptions.builder()
+                                .displayMode(VikaDisplayMode.FULLSCREEN)
+                                .appLogo(R.mipmap.ic_launcher)
+                                .appTitle("Sample App")
+                                .build()
+                            sdk.openVikaSDK(context, options)
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Chat")
+                        Text("Fullscreen")
+                    }
+
+                    // Dialog mode
+                    Button(
+                        onClick = {
+                            val options = VikaUIOptions.builder()
+                                .displayMode(VikaDisplayMode.DIALOG)
+                                .appLogo(R.mipmap.ic_launcher)
+                                .appTitle("Sample App")
+                                .dismissOnTouchOutside(true)
+                                .build()
+                            sdk.openVikaSDK(context, options)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Dialog")
+                    }
+
+                    // Bottom sheet mode
+                    Button(
+                        onClick = {
+                            val options = VikaUIOptions.builder()
+                                .displayMode(VikaDisplayMode.BOTTOM_SHEET)
+                                .appLogo(R.mipmap.ic_launcher)
+                                .appTitle("Sample App")
+                                .dismissOnTouchOutside(true)
+                                .build()
+                            sdk.openVikaSDK(context, options)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Bottom Sheet")
+                    }
+                }
+            }
+
+            // Custom Theme Demo
+            Card {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Custom Theme",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+
+                    // Custom blue theme
+                    OutlinedButton(
+                        onClick = {
+                            val customTheme = VikaThemeConfig(
+                                primaryColor = 0xFF2196F3,  // Blue
+                                secondaryColor = 0xFFFF5722,  // Deep Orange
+                                backgroundColor = 0xFF121212,  // Dark gray
+                                textColor = 0xFFFFFFFF,  // White
+                                surfaceColor = 0xFF1E1E1E,  // Slightly lighter gray
+                                waveformColor = 0xFF2196F3  // Blue
+                            )
+                            val options = VikaUIOptions.builder()
+                                .displayMode(VikaDisplayMode.DIALOG)
+                                .appLogo(R.mipmap.ic_launcher)
+                                .appTitle("Custom Theme")
+                                .theme(customTheme)
+                                .build()
+                            sdk.openVikaSDK(context, options)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Blue Theme Dialog")
+                    }
+
+                    // Light theme
+                    OutlinedButton(
+                        onClick = {
+                            val options = VikaUIOptions.builder()
+                                .displayMode(VikaDisplayMode.BOTTOM_SHEET)
+                                .appTitle("Light Theme")
+                                .theme(VikaThemeConfig.DEFAULT_LIGHT)
+                                .build()
+                            sdk.openVikaSDK(context, options)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Light Theme Bottom Sheet")
                     }
                 }
             }

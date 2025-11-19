@@ -12,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +28,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,17 +51,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import com.vika.sdk.VikaSDK
+import com.vika.sdk.models.VikaLanguage
+import com.vika.sdk.models.VikaUIOptions
 import com.vika.sdk.network.models.RecordingData
-import com.vika.sdk.ui.ui.theme.VIKATheme
+import com.vika.sdk.ui.ui.theme.VikaCustomTheme
+import com.vika.sdk.ui.ui.theme.VikaTheme
 import com.vika.sdk.utils.WaveformView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -80,12 +88,17 @@ internal class VikaMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val uiOptions = VikaSDK.currentUIOptions ?: VikaUIOptions()
+
         setContent {
-            VIKATheme {
+            VikaCustomTheme(themeConfig = uiOptions.themeConfig) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     AudioRecordScreen(
                         modifier = Modifier.padding(innerPadding),
                         fileName = "${externalCacheDir?.absolutePath}/outcoming_audio.mp3",
+                        appLogoResId = uiOptions.appLogoResId,
+                        appTitle = uiOptions.appTitle,
                         onDismiss = {
                             finish()
                         },
@@ -138,12 +151,17 @@ internal class VikaMainActivity : ComponentActivity() {
 internal fun AudioRecordScreen(
     modifier: Modifier = Modifier,
     fileName: String,
+    appLogoResId: Int? = null,
+    appTitle: String? = null,
+    isCompact: Boolean = false,
     onDismiss: () -> Unit,
     onStopRecording: () -> Unit,
     onRequestPermission: () -> Unit,
     onNavigate: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val colors = VikaTheme.colors
+
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -164,6 +182,9 @@ internal fun AudioRecordScreen(
     if (hasPermission) {
         AudioRecordUI(
             fileName = fileName,
+            appLogoResId = appLogoResId,
+            appTitle = appTitle,
+            isCompact = isCompact,
             onDismiss = onDismiss,
             onStopRecording = onStopRecording,
             onNavigate = onNavigate,
@@ -174,7 +195,7 @@ internal fun AudioRecordScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(colors.background),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -184,7 +205,7 @@ internal fun AudioRecordScreen(
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = colors.text,
                     modifier = Modifier.size(64.dp)
                 )
 
@@ -192,7 +213,7 @@ internal fun AudioRecordScreen(
 
                 Text(
                     text = "Microphone Access Required",
-                    color = Color.White,
+                    color = colors.text,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -202,7 +223,7 @@ internal fun AudioRecordScreen(
 
                 Text(
                     text = "Please grant microphone permission to record audio messages.",
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = colors.text.copy(alpha = 0.7f),
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center
                 )
@@ -219,12 +240,12 @@ internal fun AudioRecordScreen(
                         ) == PackageManager.PERMISSION_GRANTED
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White
+                        containerColor = colors.primary
                     )
                 ) {
                     Text(
                         text = "Grant Permission",
-                        color = Color.Black,
+                        color = colors.background,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -237,19 +258,36 @@ internal fun AudioRecordScreen(
 internal fun AudioRecordUI(
     modifier: Modifier = Modifier,
     fileName: String,
+    appLogoResId: Int? = null,
+    appTitle: String? = null,
+    isCompact: Boolean = false,
     onDismiss: () -> Unit,
     onStopRecording: () -> Unit,
     onNavigate: (String) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
+    val colors = VikaTheme.colors
+
+    // Get language from SDK config
+    val language = try {
+        VikaSDK.getInstance().getLanguage()
+    } catch (_: Exception) {
+        VikaLanguage.ENGLISH
+    }
+
+    // Adjust sizes for compact mode (dialog/bottom sheet)
+    val padding = if (isCompact) 16.dp else 24.dp
+    val verticalPadding = if (isCompact) 16.dp else 32.dp
 
     var isRecording by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
     var listeningText by remember { mutableStateOf("") }
     var amplitude by remember { mutableIntStateOf(0) }
 
-    // Store navigation data to execute after playback
+    // Store navigation data, reply text, and screen name to execute after playback
     var pendingNavigation by remember { mutableStateOf<String?>(null) }
+    var pendingReplyText by remember { mutableStateOf<String?>(null) }
+    var pendingScreenName by remember { mutableStateOf<String?>(null) }
 
     var mediaRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
@@ -292,7 +330,7 @@ internal fun AudioRecordUI(
                 start()
             }
             isRecording = true
-            listeningText = "Listening..."
+            listeningText = VikaStrings.listening(language)
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -334,13 +372,39 @@ internal fun AudioRecordUI(
         mediaPlayer?.stop()
         stopVisualizer()
         isPlaying = false
-        listeningText = ""
         amplitude = 0
 
-        // Execute pending navigation after playback completes
-        pendingNavigation?.let { deepLink ->
-            pendingNavigation = null
-            onNavigate(deepLink)
+        // Show reply text and navigate after delay
+        val replyText = pendingReplyText
+        val deepLink = pendingNavigation
+        val screenName = pendingScreenName
+
+        if (deepLink != null) {
+            // Show "Navigating to..." message
+            listeningText = if (screenName != null) {
+                VikaStrings.navigatingTo(language, screenName)
+            } else {
+                VikaStrings.navigating(language)
+            }
+
+            // Navigate after delay
+            scope.launch {
+                delay(2500) // 2.5 second delay to read the navigation message
+                pendingNavigation = null
+                pendingReplyText = null
+                pendingScreenName = null
+                onNavigate(deepLink)
+            }
+        } else if (replyText != null) {
+            // Show reply text if no navigation
+            listeningText = replyText
+            scope.launch {
+                delay(2500)
+                pendingReplyText = null
+                listeningText = ""
+            }
+        } else {
+            listeningText = ""
         }
     }
 
@@ -357,7 +421,7 @@ internal fun AudioRecordUI(
             setOnPreparedListener {
                 it.start()
                 isPlaying = true
-                listeningText = "Speaking..."
+                listeningText = VikaStrings.speaking(language)
                 createVisualizer(it.audioSessionId)
             }
             setOnCompletionListener {
@@ -379,7 +443,7 @@ internal fun AudioRecordUI(
             mediaRecorder = null
             isRecording = false
             amplitude = 0
-            listeningText = "Processing..."
+            listeningText = VikaStrings.processing(language)
             onStopRecording()
 
             // Send recording to API
@@ -390,13 +454,18 @@ internal fun AudioRecordUI(
                         audioFile = audioFile,
                         callback = object : VikaSDK.RecordingCallback {
                             override fun onStarted() {
-                                listeningText = "Sending..."
+                                listeningText = VikaStrings.sending(language)
                             }
 
                             override fun onSuccess(response: RecordingData) {
-                                // Store navigation for after playback
+                                // Store reply text and navigation for after playback
+                                pendingReplyText = response.replyText
                                 response.navigation?.let { nav ->
                                     pendingNavigation = nav.deepLink
+                                    // Look up screen name from registered screens
+                                    val screen = VikaSDK.getInstance().getRegisteredScreens()
+                                        .find { it.screenId == nav.screenId }
+                                    pendingScreenName = screen?.screenName
                                 }
 
                                 // Play back the recorded audio (until BE provides reply audio)
@@ -405,7 +474,8 @@ internal fun AudioRecordUI(
                             }
 
                             override fun onError(error: Throwable) {
-                                listeningText = "Error: ${error.message}"
+                                listeningText =
+                                    VikaStrings.error(language, error.message ?: "Unknown error")
 
                                 // Still play back the recording on error
                                 play(fileName)
@@ -425,45 +495,88 @@ internal fun AudioRecordUI(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .then(if (isCompact) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
+            .background(colors.background)
+            .padding(horizontal = padding, vertical = verticalPadding)
     ) {
-        // Info icon - top end
-        IconButton(
-            onClick = { /* Handle info click */ },
-            modifier = Modifier.align(Alignment.TopEnd)
+        // Top row with app branding and info icon
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Info,
-                contentDescription = "Info",
-                tint = Color.White
-            )
+            // App logo and title - top start
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                appLogoResId?.let { logoRes ->
+                    val context = LocalContext.current
+                    val density = LocalDensity.current
+                    val sizePx = with(density) { 32.dp.toPx().toInt() }
+                    val drawable = ContextCompat.getDrawable(context, logoRes)
+                    drawable?.let {
+                        val bitmap = it.toBitmap(sizePx, sizePx)
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "App Logo",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+                appTitle?.let { title ->
+                    Text(
+                        text = title,
+                        color = colors.text,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Info icon - top end
+            IconButton(
+                onClick = { /* Handle info click */ }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "Info",
+                    tint = colors.text
+                )
+            }
         }
 
         // Center content
         Column(
             modifier = Modifier
+                .padding(top = 32.dp)
                 .fillMaxWidth()
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Waveform view - square aspect ratio
+            // Waveform view - square aspect ratio (smaller in compact mode)
             WaveformView(
                 amplitude = amplitude,
                 isActive = isRecording || isPlaying,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
+                color = colors.waveform,
+                modifier = if (isCompact) {
+                    Modifier.size(160.dp)
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(if (isCompact) 12.dp else 16.dp))
 
             // Listening text
             Text(
                 text = listeningText,
-                color = Color.White,
-                fontSize = 18.sp,
+                color = colors.text,
+                fontSize = if (isCompact) 16.sp else 18.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -477,10 +590,10 @@ internal fun AudioRecordUI(
                 .align(Alignment.BottomCenter),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Record/Stop button - white background
+            // Record/Stop button - primary color background
             Card(
                 shape = RoundedCornerShape(32.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = colors.primary),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 IconButton(
@@ -499,21 +612,21 @@ internal fun AudioRecordUI(
                 ) {
                     Icon(
                         imageVector = if (isRecording || isPlaying) {
-                            Icons.Default.Close // Icons.Default.Stop
+                            Icons.Default.Stop
                         } else {
-                            Icons.Default.PlayArrow //Icons.Default.Mic
+                            Icons.Default.Mic
                         },
                         contentDescription = if (isRecording || isPlaying) "Stop" else "Record",
-                        tint = Color.Black,
+                        tint = colors.background,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
             }
 
-            // Close button - red background
+            // Close button - secondary color background
             Card(
                 shape = RoundedCornerShape(32.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFF4444)),
+                colors = CardDefaults.cardColors(containerColor = colors.secondary),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 IconButton(
@@ -523,7 +636,7 @@ internal fun AudioRecordUI(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Color.White,
+                        tint = colors.primary,
                         modifier = Modifier.padding(12.dp)
                     )
                 }

@@ -9,6 +9,16 @@
             android:exported="false"
             android:label="@string/title_activity_vika_main"
             android:theme="@style/Theme.VIKA" />
+
+        <activity
+            android:name=".ui.VikaDialogActivity"
+            android:exported="false"
+            android:theme="@style/Theme.VIKA.Dialog" />
+
+        <activity
+            android:name=".ui.VikaBottomSheetActivity"
+            android:exported="false"
+            android:theme="@style/Theme.VIKA.BottomSheet" />
     </application>
 
 </manifest>
