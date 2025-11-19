@@ -1,0 +1,72 @@
+<resources>
+    <string name="title_activity_vika_main">VikaMainActivity</string>
+
+    <!-- UI Text - Permissions -->
+    <string name="permission_audio_required">Izin audio diperlukan untuk merekam suara</string>
+    <string name="permission_audio_title">Izin Audio Diperlukan</string>
+    <string name="permission_audio_message">Aplikasi ini membutuhkan akses ke mikrofon Anda untuk merekam pesan suara.</string>
+    <string name="permission_microphone_title">Akses Mikrofon Diperlukan</string>
+    <string name="permission_microphone_message">Mohon berikan izin mikrofon untuk merekam pesan suara.</string>
+
+    <!-- UI Text - Buttons -->
+    <string name="btn_grant">Izinkan</string>
+    <string name="btn_cancel">Batal</string>
+    <string name="btn_grant_permission">Berikan Izin</string>
+
+    <!-- UI Text - Status -->
+    <string name="status_listening">Mendengarkan…</string>
+    <string name="status_speaking">Berbicara…</string>
+    <string name="status_processing">Memproses…</string>
+    <string name="status_sending">Mengirim…</string>
+    <string name="status_error">Error: %1$s</string>
+
+    <!-- UI Text - Content Descriptions -->
+    <string name="content_desc_info">Info</string>
+    <string name="content_desc_stop">Berhenti</string>
+    <string name="content_desc_record">Rekam</string>
+    <string name="content_desc_close">Tutup</string>
+
+    <!-- Error Messages - Navigation -->
+    <string name="error_invalid_query">Pencarian tidak valid: %1$s</string>
+    <string name="error_low_confidence">Tidak dapat memahami permintaan Anda dengan jelas</string>
+    <string name="error_screen_not_found">Halaman yang diminta tidak ditemukan</string>
+    <string name="error_invalid_params">Parameter navigasi tidak valid</string>
+    <string name="error_network">Koneksi jaringan error. Silakan coba lagi.</string>
+    <string name="error_security">Terjadi kesalahan keamanan</string>
+    <string name="error_invalid_deep_link">Link navigasi tidak valid</string>
+    <string name="error_unknown">Terjadi kesalahan yang tidak terduga</string>
+    <string name="error_timeout">Permintaan timeout. Silakan coba lagi.</string>
+    <string name="error_rate_limited">Terlalu banyak permintaan. Mohon tunggu dan coba lagi.</string>
+
+    <!-- Error Messages - SDK -->
+    <string name="error_sdk_not_initialized">SDK belum diinisialisasi. Panggil VikaSDK.initialize() terlebih dahulu.</string>
+    <string name="error_query_empty">Query tidak boleh kosong</string>
+    <string name="error_session_expired">Sesi telah berakhir. Silakan inisialisasi ulang.</string>
+    <string name="error_auth_failed">Autentikasi gagal. Periksa API key Anda.</string>
+    <string name="error_confidence_low">Tingkat kepercayaan navigasi terlalu rendah: %1$.2f</string>
+    <string name="error_screen_not_registered">Halaman tidak terdaftar: %1$s</string>
+
+    <!-- Error Messages - License -->
+    <string name="error_invalid_api_key">Format API key tidak valid</string>
+    <string name="error_debug_not_allowed">SDK tidak dapat berjalan dalam mode debug untuk lisensi ini</string>
+    <string name="error_emulator_not_allowed">SDK tidak dapat berjalan pada emulator untuk lisensi ini</string>
+    <string name="error_package_not_authorized">Package \'%1$s\' tidak diizinkan untuk API key ini</string>
+    <string name="error_signature_mismatch">Tanda tangan aplikasi tidak cocok. Kemungkinan terdeteksi manipulasi.</string>
+
+    <!-- Error Messages - Network -->
+    <string name="error_empty_data">Data %1$s kosong</string>
+    <string name="error_empty_response">Response %1$s kosong</string>
+    <string name="error_operation_failed">%1$s gagal: %2$d - %3$s</string>
+    <string name="error_request_failed_attempts">Permintaan gagal setelah %1$d percobaan</string>
+    <string name="error_encryption_failed">Enkripsi gagal</string>
+    <string name="error_decryption_failed">Dekripsi gagal</string>
+
+    <!-- Error Messages - Validation -->
+    <string name="error_missing_signature">Tanda tangan response tidak ada</string>
+    <string name="error_invalid_content_type">Tipe konten tidak valid: %1$s</string>
+    <string name="error_timestamp_old">Timestamp response terlalu lama: selisih %1$dms</string>
+    <string name="error_deep_link_empty">URI deep link kosong</string>
+    <string name="error_uri_invalid">Format URI tidak valid: %1$s</string>
+    <string name="error_scheme_not_allowed">Skema URI \'%1$s\' tidak ada dalam daftar yang diizinkan: %2$s</string>
+    <string name="error_deep_link_no_match">Deep link \'%1$s\' tidak cocok dengan halaman yang terdaftar</string>
+</resources>

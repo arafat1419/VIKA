@@ -4,4 +4,11 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.android.library) apply false
+    id("maven-publish")
+    id("signing")
+}
+
+allprojects {
+    group = "com.vika.sdk"
+    version = "1.0.0"
 }
