@@ -5,7 +5,6 @@ import com.vika.sdk.BuildConfig
 import com.vika.sdk.models.SDKConfig
 import com.vika.sdk.models.ScreenRegistration
 import com.vika.sdk.network.exceptions.NetworkException
-import com.vika.sdk.network.exceptions.SecurityException
 import com.vika.sdk.network.interceptors.AuthenticationInterceptor
 import com.vika.sdk.network.interceptors.RetryInterceptor
 import com.vika.sdk.network.models.ConversationResponse
@@ -24,9 +23,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * Secure API client for VIKA backend communication.
@@ -39,8 +35,6 @@ import javax.crypto.spec.SecretKeySpec
 internal class SecureNavigationApiClient(
     private val config: SDKConfig
 ) {
-    private val encryptionKey = generateEncryptionKey(config.apiKey)
-
     private val okHttpClient = OkHttpClient.Builder().apply {
         // Timeouts
         connectTimeout(config.timeoutMillis, TimeUnit.MILLISECONDS)
@@ -202,43 +196,6 @@ internal class SecureNavigationApiClient(
             "webm" -> "audio/webm"
             else -> "audio/mpeg"
         }
-    }
-
-    private fun encryptData(data: String): String {
-        try {
-            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-            val keySpec = SecretKeySpec(encryptionKey, "AES")
-            val ivSpec = IvParameterSpec(ByteArray(16))
-
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
-            val encrypted = cipher.doFinal(data.toByteArray())
-
-            return Base64.encodeToString(encrypted, Base64.NO_WRAP)
-        } catch (e: Exception) {
-            throw SecurityException("Encryption failed", e)
-        }
-    }
-
-    private fun decryptData(encryptedData: String): String {
-        try {
-            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-            val keySpec = SecretKeySpec(encryptionKey, "AES")
-            val ivSpec = IvParameterSpec(ByteArray(16))
-
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec)
-            val decrypted = cipher.doFinal(
-                Base64.decode(encryptedData, Base64.NO_WRAP)
-            )
-
-            return String(decrypted)
-        } catch (e: Exception) {
-            throw SecurityException("Decryption failed", e)
-        }
-    }
-
-    private fun generateEncryptionKey(apiKey: String): ByteArray {
-        val digest = MessageDigest.getInstance("SHA-256")
-        return digest.digest(apiKey.toByteArray()).copyOf(16)
     }
 
     private fun generateSignature(content: String): String {
