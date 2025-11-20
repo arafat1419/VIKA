@@ -23,6 +23,7 @@ securityCrypto = "1.1.0"
 socketIo = "2.1.0"
 navigationRuntimeKtx = "2.9.6"
 navigationCompose = "2.9.6"
+vikaSdk = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,6 +56,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIo" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+vika-sdk = { module = "com.vika.sdk:vika-sdk", version.ref = "vikaSdk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
