@@ -7,20 +7,28 @@
 
 # Keep main SDK class
 -keep class com.vika.sdk.VikaSDK {
-    public static ** initialize(...);
-    public static ** getInstance();
-    public static ** isInitialized();
-    public static ** destroy();
-    public ** registerScreen(...);
-    public ** registerScreens(...);
-    public ** registerScreensAsync(...);
-    public ** openVikaSDK(...);
-    public ** sendRecording(...);
-    public ** sendRecordingAsync(...);
-    public ** executeDeepLinkNavigation(...);
-    public ** navigateFromQuery(...);
-    public ** getRegisteredScreens();
-    public ** registerNavigationHandler(...);
+    public static void initialize(...);
+    public static com.vika.sdk.VikaSDK getInstance();
+    public static boolean isInitialized();
+    public static void destroy();
+    public static *** getCurrentUIOptions();
+    public *** registerScreen(...);
+    public *** registerScreens(...);
+    public *** saveScreensAsync(...);
+    public void openVikaSDK(...);
+    public *** sendConversation(...);
+    public *** sendConversationAsync(...);
+    public void executeDeepLinkNavigation(...);
+    public *** navigateFromQuery(...);
+    public *** getRegisteredScreens();
+    public void registerNavigationHandler(...);
+    public void setConversationListener(...);
+    public boolean isSocketConnected();
+    public void disconnectSocket();
+    public void reconnectSocket();
+    public boolean isBackendReady();
+    public *** getLanguage();
+    public *** getConfig();
 }
 
 # Keep SDK callbacks and interfaces
@@ -93,6 +101,22 @@
 -keep interface okhttp3.** { *; }
 
 # ============================================
+# Socket.IO
+# ============================================
+
+-keep class io.socket.** { *; }
+-keep interface io.socket.** { *; }
+-dontwarn io.socket.**
+
+# Keep Socket.IO engine.io classes
+-keep class io.socket.engineio.** { *; }
+-keep class io.socket.client.** { *; }
+-keep class io.socket.emitter.** { *; }
+
+# Keep org.json classes used by Socket.IO
+-keep class org.json.** { *; }
+
+# ============================================
 # Kotlin Coroutines
 # ============================================
 
@@ -114,6 +138,7 @@
 -keep,allowobfuscation class com.vika.sdk.network.api.** { *; }
 -keep,allowobfuscation class com.vika.sdk.network.interceptors.** { *; }
 -keep,allowobfuscation class com.vika.sdk.network.exceptions.** { *; }
+-keep,allowobfuscation class com.vika.sdk.network.socket.** { *; }
 -keep,allowobfuscation class com.vika.sdk.security.** { *; }
 -keep,allowobfuscation class com.vika.sdk.session.** { *; }
 -keep,allowobfuscation class com.vika.sdk.analytics.** { *; }
