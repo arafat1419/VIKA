@@ -28,3 +28,7 @@ local.properties
 
 # Kotlin
 .kotlin/
+
+# Credentials - Never commit these!
+*.jks
+*.keystore

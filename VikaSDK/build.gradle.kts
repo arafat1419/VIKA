@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -34,46 +36,54 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
     }
 
     buildFeatures {
         buildConfig = true
         compose = true
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
+    api(libs.androidx.core.ktx)
+    api(libs.androidx.appcompat)
+    api(libs.material)
+    api(libs.androidx.lifecycle.runtime.ktx)
+    api(libs.androidx.ui)
+    api(libs.androidx.ui.graphics)
+    api(libs.androidx.ui.tooling.preview)
+    api(libs.androidx.material3)
+    api(libs.androidx.material.icons.extended)
+    api(libs.androidx.activity.compose)
+    api(platform(libs.androidx.compose.bom))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Kotlin
-    implementation(libs.kotlin.stdlib)
-    implementation(libs.kotlinx.coroutines.android)
+    api(libs.kotlin.stdlib)
+    api(libs.kotlinx.coroutines.android)
 
     // Networking
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.okhttp)
-    implementation(libs.logging.interceptor)
-    implementation(libs.socket.io.client)
+    api(libs.retrofit)
+    api(libs.converter.gson)
+    api(libs.okhttp)
+    api(libs.logging.interceptor)
+    api(libs.socket.io.client)
 
     // Security
-    implementation(libs.androidx.security.crypto)
+    api(libs.androidx.security.crypto)
 
     // Testing
     testImplementation(libs.mockito.core)
@@ -83,4 +93,62 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// GitHub Packages Publishing Configuration
+// For private SDK distribution to authorized clients
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+
+                groupId = "com.vika.sdk"
+                artifactId = "vika-sdk"
+                version = "1.0.0"
+
+                pom {
+                    name.set("VIKA")
+                    description.set("Voice-driven navigation SDK for Android")
+                    url.set("https://github.com/arafat1419/VIKA")
+
+                    licenses {
+                        license {
+                            name.set("Proprietary")
+                            url.set("https://github.com/arafat1419/VIKA/blob/main/LICENSE")
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set("vika")
+                            name.set("VIKA Team")
+                        }
+                    }
+                }
+            }
+        }
+
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/arafat1419/VIKA")
+                credentials {
+                    // Read from local.properties (not committed to Git)
+                    val localProperties = Properties()
+                    val localPropertiesFile = rootProject.file("local.properties")
+                    if (localPropertiesFile.exists()) {
+                        localPropertiesFile.inputStream().use { stream ->
+                            localProperties.load(stream)
+                        }
+                    }
+
+                    username =
+                        localProperties.getProperty("github.user") ?: System.getenv("GITHUB_ACTOR")
+                    password =
+                        localProperties.getProperty("github.token") ?: System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
+    }
 }
