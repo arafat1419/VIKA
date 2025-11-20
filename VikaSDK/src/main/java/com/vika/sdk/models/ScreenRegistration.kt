@@ -1,5 +1,7 @@
 package com.vika.sdk.models
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Represents a screen that can be navigated to via voice commands.
  *
@@ -67,9 +69,14 @@ data class ScreenRegistration(
  * @property keywords Matching keywords
  */
 internal data class SecureScreen(
+    @SerializedName("screen_id")
     val screenId: String,
+    @SerializedName("screen_name")
     val screenName: String,
+    @SerializedName("description")
     val description: String,
+    @SerializedName("deep_link")
     val deepLink: String,
+    @SerializedName("keywords")
     val keywords: List<String>
 )

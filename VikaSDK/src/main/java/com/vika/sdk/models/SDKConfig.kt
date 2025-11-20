@@ -23,6 +23,8 @@ package com.vika.sdk.models
  * @property certificatePinning Certificate pinning configuration for enhanced security
  * @property allowedDeepLinkSchemes Whitelist of allowed deep link schemes
  * @property language Language for the SDK UI (English or Indonesian)
+ * @property socketReconnectionAttempts Maximum number of socket reconnection attempts
+ * @property socketReconnectionDelay Initial delay between reconnection attempts in milliseconds
  */
 class SDKConfig private constructor(
     val apiKey: String,
@@ -34,7 +36,9 @@ class SDKConfig private constructor(
     val cacheEnabled: Boolean,
     val certificatePinning: CertificatePinningConfig?,
     val allowedDeepLinkSchemes: List<String>,
-    val language: VikaLanguage
+    val language: VikaLanguage,
+    val socketReconnectionAttempts: Int,
+    val socketReconnectionDelay: Long
 ) {
     companion object {
         /** Default minimum confidence threshold */
@@ -45,6 +49,12 @@ class SDKConfig private constructor(
 
         /** Default maximum retry attempts */
         const val DEFAULT_MAX_RETRIES = 3
+
+        /** Default socket reconnection attempts */
+        const val DEFAULT_SOCKET_RECONNECTION_ATTEMPTS = 5
+
+        /** Default socket reconnection delay in milliseconds */
+        const val DEFAULT_SOCKET_RECONNECTION_DELAY = 1000L
     }
 
     /**
@@ -62,6 +72,8 @@ class SDKConfig private constructor(
         private var certificatePinning: CertificatePinningConfig? = null
         private var allowedDeepLinkSchemes: MutableList<String> = mutableListOf()
         private var language: VikaLanguage = VikaLanguage.ENGLISH
+        private var socketReconnectionAttempts: Int = DEFAULT_SOCKET_RECONNECTION_ATTEMPTS
+        private var socketReconnectionDelay: Long = DEFAULT_SOCKET_RECONNECTION_DELAY
 
         /**
          * Set minimum confidence threshold for navigation.
@@ -174,6 +186,30 @@ class SDKConfig private constructor(
         }
 
         /**
+         * Set socket reconnection attempts.
+         *
+         * @param attempts Maximum number of reconnection attempts (0 = no retries)
+         * @return This builder for chaining
+         * @throws IllegalArgumentException if attempts is negative
+         */
+        fun socketReconnectionAttempts(attempts: Int) = apply {
+            require(attempts >= 0) { "Socket reconnection attempts must be non-negative" }
+            this.socketReconnectionAttempts = attempts
+        }
+
+        /**
+         * Set socket reconnection delay.
+         *
+         * @param millis Initial delay between reconnection attempts in milliseconds
+         * @return This builder for chaining
+         * @throws IllegalArgumentException if delay is not positive
+         */
+        fun socketReconnectionDelay(millis: Long) = apply {
+            require(millis > 0) { "Socket reconnection delay must be positive" }
+            this.socketReconnectionDelay = millis
+        }
+
+        /**
          * Build the [SDKConfig] instance.
          *
          * @return Configured SDKConfig
@@ -192,7 +228,9 @@ class SDKConfig private constructor(
                 cacheEnabled = cacheEnabled,
                 certificatePinning = certificatePinning,
                 allowedDeepLinkSchemes = allowedDeepLinkSchemes.toList(),
-                language = language
+                language = language,
+                socketReconnectionAttempts = socketReconnectionAttempts,
+                socketReconnectionDelay = socketReconnectionDelay
             )
         }
     }
@@ -207,7 +245,9 @@ class SDKConfig private constructor(
                 "cacheEnabled=$cacheEnabled, " +
                 "certificatePinning=${certificatePinning != null}, " +
                 "allowedDeepLinkSchemes=$allowedDeepLinkSchemes, " +
-                "language=$language)"
+                "language=$language, " +
+                "socketReconnectionAttempts=$socketReconnectionAttempts, " +
+                "socketReconnectionDelay=$socketReconnectionDelay)"
     }
 }
 

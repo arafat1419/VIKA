@@ -17,7 +17,8 @@ android {
         consumerProguardFiles("consumer-rules.pro")
 
         buildConfigField("String", "SDK_VERSION", "\"1.0.0\"")
-        buildConfigField("String", "BASE_URL", "\"https://api.example.com/\"")
+        buildConfigField("String", "BASE_URL", "\"https://vika-ng.ekoptra.com\"")
+        buildConfigField("String", "SOCKET_URL", "\"https://vika-ng.ekoptra.com\"")
     }
 
     buildTypes {
@@ -69,6 +70,7 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
+    implementation(libs.socket.io.client)
 
     // Security
     implementation(libs.androidx.security.crypto)

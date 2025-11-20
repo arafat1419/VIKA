@@ -7,17 +7,12 @@ import com.vika.sdk.models.ScreenRegistration
 import com.vika.sdk.network.exceptions.NetworkException
 import com.vika.sdk.network.exceptions.SecurityException
 import com.vika.sdk.network.interceptors.AuthenticationInterceptor
-import com.vika.sdk.network.interceptors.RequestSigningInterceptor
-import com.vika.sdk.network.interceptors.ResponseValidationInterceptor
 import com.vika.sdk.network.interceptors.RetryInterceptor
-import com.vika.sdk.network.models.ApiResponse
+import com.vika.sdk.network.models.ConversationResponse
 import com.vika.sdk.network.models.InitializeData
 import com.vika.sdk.network.models.InitializeRequest
-import com.vika.sdk.network.models.NavigationData
-import com.vika.sdk.network.models.RecordingData
-import com.vika.sdk.network.models.RegisterScreensData
-import com.vika.sdk.network.models.RegisterScreensRequest
-import kotlinx.coroutines.delay
+import com.vika.sdk.network.models.ScreenData
+import com.vika.sdk.network.models.ScreenRequest
 import okhttp3.CertificatePinner
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -28,17 +23,16 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.security.MessageDigest
-import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Secure API client with encryption and certificate pinning.
+ * Secure API client for VIKA backend communication.
  *
- * Handles all network communication with the VIKA backend including
- * initialization, screen registration, and voice recording submission.
+ * Handles all network communication including initialization,
+ * screen registration, and audio conversation submission.
  *
  * @param config SDK configuration
  */
@@ -67,14 +61,8 @@ internal class SecureNavigationApiClient(
             }
         }
 
-        // Authentication
-        addInterceptor(AuthenticationInterceptor(config.apiKey))
-
-        // Request signing
-        addInterceptor(RequestSigningInterceptor(config.apiKey))
-
-        // Response validation
-        addInterceptor(ResponseValidationInterceptor())
+        // Authentication interceptor (handles Bearer token for protected endpoints)
+        addInterceptor(AuthenticationInterceptor(config.apiKey, ::getSessionId))
 
         // Retry interceptor
         addInterceptor(RetryInterceptor(config.maxRetries))
@@ -88,7 +76,7 @@ internal class SecureNavigationApiClient(
     }.build()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl(BuildConfig.BASE_URL)
+        .baseUrl(BuildConfig.BASE_URL + "/")
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
@@ -98,118 +86,69 @@ internal class SecureNavigationApiClient(
     // Session ID from initialize response
     private var sessionId: String? = null
 
-    // Flag to use mock responses (set to true until BE is ready)
-    private val useMock = true
-
     /**
      * Initialize SDK with backend.
      *
-     * @param appPackage Application package name
      * @return InitializeData with session ID
      * @throws NetworkException if initialization fails
      */
-    suspend fun initialize(appPackage: String): InitializeData {
-        if (useMock) {
-            // Mock response for testing
-            delay(500)
-            val mockSessionId = UUID.randomUUID().toString()
-            sessionId = mockSessionId
-            return InitializeData(
-                sessionId = mockSessionId,
-                expiresAt = System.currentTimeMillis() + 3600000
-            )
-        }
+    suspend fun initialize(): InitializeData {
+        val timestamp = System.currentTimeMillis()
+        val signature = generateSignature(config.apiKey + timestamp)
 
         val request = InitializeRequest(
             apiKey = config.apiKey,
-            appPackage = appPackage,
-            sdkVersion = BuildConfig.SDK_VERSION,
-            timestamp = System.currentTimeMillis()
+            timestamp = timestamp,
+            signature = signature
         )
 
         val response = api.initialize(request)
-        val apiResponse = handleResponse(response, "Initialize")
+        val data = handleResponse(response, "Initialize")
 
-        val data = apiResponse.data ?: throw NetworkException("Empty initialize data")
         sessionId = data.sessionId
         return data
     }
 
     /**
-     * Register screens with backend.
+     * Save screens with backend.
      *
      * @param screens List of screen registrations
-     * @return RegisterScreensData with count
-     * @throws NetworkException if registration fails
+     * @return ScreenData with updated count
+     * @throws NetworkException if saving fails
      */
-    suspend fun registerScreens(screens: List<ScreenRegistration>): RegisterScreensData {
-        val currentSessionId = sessionId ?: throw NetworkException("SDK not initialized")
-
-        if (useMock) {
-            // Mock response for testing
-            delay(300)
-            return RegisterScreensData(
-                registeredCount = screens.size
-            )
+    suspend fun saveScreens(screens: List<ScreenRegistration>): ScreenData {
+        if (sessionId == null) {
+            throw NetworkException("SDK not initialized")
         }
 
-        val request = RegisterScreensRequest(
-            sessionId = currentSessionId,
-            screens = screens.map { it.toSecureScreen() },
-            timestamp = System.currentTimeMillis()
+        val request = ScreenRequest(
+            screens = screens.map { it.toSecureScreen() }
         )
 
-        val response = api.registerScreens(request)
-        val apiResponse = handleResponse(response, "Register screens")
-
-        return apiResponse.data ?: throw NetworkException("Empty register data")
+        val response = api.saveScreens(request)
+        return handleResponse(response, "Save screens")
     }
 
     /**
-     * Send voice recording and get response.
+     * Send audio for conversation processing.
      *
-     * @param audioFile Audio file to send
-     * @param registeredScreens List of registered screens for mock navigation
-     * @return RecordingData with transcription, reply audio, and navigation
+     * Results are delivered through Socket.IO 'conversation_processed' event.
+     *
+     * @param audioFile Audio file to send (mp3, wav, m4a, ogg, webm)
+     * @return ConversationResponse with conversation ID for tracking
      * @throws NetworkException if sending fails
      */
-    suspend fun sendRecording(
-        audioFile: File,
-        registeredScreens: List<ScreenRegistration> = emptyList()
-    ): RecordingData {
-        val currentSessionId = sessionId ?: throw NetworkException("SDK not initialized")
-
-        if (useMock) {
-            // Mock response for testing
-            delay(1000)
-
-            // Pick a random screen for mock navigation if available
-            val mockNavigation = if (registeredScreens.isNotEmpty()) {
-                val screen = registeredScreens.random()
-                NavigationData(
-                    screenId = screen.screenId,
-                    deepLink = screen.deepLink,
-                    confidence = 0.95f
-                )
-            } else {
-                null
-            }
-
-            return RecordingData(
-                transcription = "Mock transcription of user voice",
-                replyText = "I'll help you navigate to the requested screen.",
-                replyAudioUrl = null,
-                navigation = mockNavigation
-            )
+    suspend fun sendConversation(audioFile: File): ConversationResponse {
+        if (sessionId == null) {
+            throw NetworkException("SDK not initialized")
         }
 
-        val requestBody = audioFile.asRequestBody("audio/mp4".toMediaTypeOrNull())
+        val mediaType = getAudioMediaType(audioFile.extension)
+        val requestBody = audioFile.asRequestBody(mediaType.toMediaTypeOrNull())
         val audioPart = MultipartBody.Part.createFormData("audio", audioFile.name, requestBody)
 
-        val response = api.sendRecording(audioPart, currentSessionId)
-        val apiResponse = handleResponse(response, "Send recording")
-
-        return apiResponse.data ?: throw NetworkException("Empty recording data")
+        val response = api.sendConversation(audioPart)
+        return handleResponse(response, "Send conversation")
     }
 
     /**
@@ -217,13 +156,13 @@ internal class SecureNavigationApiClient(
      *
      * @param response Retrofit response
      * @param operation Operation name for error messages
-     * @return ApiResponse body
+     * @return Response body
      * @throws NetworkException if response is unsuccessful or empty
      */
     private fun <T> handleResponse(
-        response: retrofit2.Response<ApiResponse<T>>,
+        response: retrofit2.Response<T>,
         operation: String
-    ): ApiResponse<T> {
+    ): T {
         if (!response.isSuccessful) {
             val errorBody = response.errorBody()?.string()
             throw NetworkException(
@@ -243,6 +182,27 @@ internal class SecureNavigationApiClient(
      * Check if SDK is initialized with backend.
      */
     fun isInitializedWithBackend(): Boolean = sessionId != null
+
+    /**
+     * Clear session data.
+     */
+    fun clearSession() {
+        sessionId = null
+    }
+
+    /**
+     * Get appropriate media type for audio file extension.
+     */
+    private fun getAudioMediaType(extension: String): String {
+        return when (extension.lowercase()) {
+            "mp3" -> "audio/mpeg"
+            "wav" -> "audio/wav"
+            "m4a" -> "audio/mp4"
+            "ogg" -> "audio/ogg"
+            "webm" -> "audio/webm"
+            else -> "audio/mpeg"
+        }
+    }
 
     private fun encryptData(data: String): String {
         try {
@@ -281,14 +241,9 @@ internal class SecureNavigationApiClient(
         return digest.digest(apiKey.toByteArray()).copyOf(16)
     }
 
-    private fun generateNonce(): String {
-        return System.currentTimeMillis().toString() +
-                (0..999999).random().toString()
-    }
-
     private fun generateSignature(content: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest("$content${config.apiKey}".toByteArray())
+        val hash = digest.digest(content.toByteArray())
         return Base64.encodeToString(hash, Base64.NO_WRAP)
     }
 

@@ -88,6 +88,23 @@ sealed class VikaError {
     ) : VikaError()
 
     /**
+     * Socket connection error.
+     */
+    data class SocketConnection(
+        override val message: String = "Socket connection failed",
+        override val cause: Throwable? = null
+    ) : VikaError()
+
+    /**
+     * Conversation processing failed error.
+     */
+    data class ConversationFailed(
+        val conversationId: String,
+        override val message: String = "Conversation processing failed",
+        override val cause: Throwable? = null
+    ) : VikaError()
+
+    /**
      * Unknown error.
      */
     data class Unknown(

@@ -3,6 +3,7 @@ package com.vika.sdk
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import com.vika.sdk.VikaSDK.Companion.initialize
 import com.vika.sdk.analytics.AnalyticsTracker
 import com.vika.sdk.callbacks.NavigationCallback
@@ -22,7 +23,10 @@ import com.vika.sdk.navigation.NavigationHandler
 import com.vika.sdk.network.api.SecureNavigationApiClient
 import com.vika.sdk.network.exceptions.NetworkException
 import com.vika.sdk.network.exceptions.SecurityException
-import com.vika.sdk.network.models.RecordingData
+import com.vika.sdk.network.models.ConversationProcessedEvent
+import com.vika.sdk.network.models.ConversationResponse
+import com.vika.sdk.network.socket.SocketEventListener
+import com.vika.sdk.network.socket.SocketManager
 import com.vika.sdk.security.LicenseValidator
 import com.vika.sdk.security.SDKSecurityManager
 import com.vika.sdk.session.SessionManager
@@ -117,9 +121,18 @@ class VikaSDK private constructor(
         LicenseValidator(securityManager)
     }
 
+    private val socketManager: SocketManager by lazy {
+        SocketManager(config)
+    }
+
     private val sessionManager = SessionManager()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private var conversationListener: ConversationListener? = null
+
+    @Volatile
+    private var isBackendInitialized = false
 
     companion object {
         private const val TAG = "VikaSDK"
@@ -142,7 +155,7 @@ class VikaSDK private constructor(
 
         /**
          * Initialize the SDK with configuration.
-         * This will also call the backend to validate credentials.
+         * This will call the backend to validate credentials and connect to Socket.IO.
          *
          * @param context Application context
          * @param config SDK configuration
@@ -180,16 +193,20 @@ class VikaSDK private constructor(
                             return
                         }
 
-                        // Call backend to validate credentials
+                        // Call backend to validate credentials and get session ID
                         sdk.scope.launch {
                             try {
-                                val data = sdk.apiClient.initialize(
-                                    context.applicationContext.packageName
-                                )
-                                sdk.sessionManager.setSession(data.sessionId, data.expiresAt)
-                                sdk.logDebug("Backend initialized: session active")
+                                val data = sdk.apiClient.initialize()
+                                sdk.sessionManager.setSession(data.sessionId)
+                                sdk.isBackendInitialized = true
+                                sdk.logDebug("Backend initialized: session=${data.sessionId}")
+
+                                // Connect to Socket.IO with the session ID
+                                sdk.connectSocket(data.sessionId)
+
                                 callback?.onSuccess()
                             } catch (e: Exception) {
+                                sdk.isBackendInitialized = false
                                 sdk.logError("Backend initialization failed", e)
                                 callback?.onError(e)
                             }
@@ -245,6 +262,80 @@ class VikaSDK private constructor(
     }
 
     /**
+     * Connect to Socket.IO server with the session ID.
+     */
+    private fun connectSocket(sessionId: String) {
+        socketManager.setEventListener(object : SocketEventListener {
+            override fun onConnected(sessionId: String) {
+                logDebug("Socket connected with session: $sessionId")
+            }
+
+            override fun onDisconnected() {
+                logDebug("Socket disconnected")
+            }
+
+            override fun onConversationProcessed(event: ConversationProcessedEvent) {
+                logDebug("Conversation processed: ${event.conversationId}")
+                scope.launch {
+                    conversationListener?.onConversationProcessed(event)
+                }
+            }
+
+            override fun onError(error: String) {
+                logError("Socket error: $error")
+                scope.launch {
+                    conversationListener?.onError(
+                        VikaError.SocketConnection(error)
+                    )
+                }
+            }
+
+            override fun onReconnecting(attempt: Int) {
+                logDebug("Socket reconnecting, attempt: $attempt")
+            }
+        })
+
+        socketManager.connect(sessionId)
+    }
+
+    /**
+     * Set listener for conversation processing results.
+     *
+     * @param listener Listener to receive conversation results from Socket.IO
+     */
+    fun setConversationListener(listener: ConversationListener?) {
+        this.conversationListener = listener
+    }
+
+    /**
+     * Check if socket is connected.
+     *
+     * @return True if socket is currently connected
+     */
+    fun isSocketConnected(): Boolean = socketManager.isConnected()
+
+    /**
+     * Disconnect from socket server.
+     */
+    fun disconnectSocket() {
+        socketManager.disconnect()
+        logDebug("Socket disconnected manually")
+    }
+
+    /**
+     * Reconnect to socket server.
+     */
+    fun reconnectSocket() {
+        val sessionId = sessionManager.getSessionId()
+        if (sessionId != null) {
+            socketManager.connect(sessionId)
+            logDebug("Socket reconnecting")
+        } else {
+            logError("Cannot reconnect: no session ID")
+        }
+    }
+
+    /**
      * Register a navigation handler
      */
     fun registerNavigationHandler(type: String, handler: NavigationHandler) {
@@ -265,14 +356,14 @@ class VikaSDK private constructor(
         registeredScreens[screen.screenId] = screen
         logDebug("Registered screen locally: ${screen.screenId}")
 
-        // Register with backend
+        // Save to backend
         scope.launch {
             try {
-                val response = apiClient.registerScreens(listOf(screen))
-                logDebug("Screen registered with backend: ${response.registeredCount}")
-                callback?.onSuccess(response.registeredCount)
+                val response = apiClient.saveScreens(listOf(screen))
+                logDebug("Screen saved to backend: ${response.updatedScreenCount}")
+                callback?.onSuccess(response.updatedScreenCount)
             } catch (e: Exception) {
-                logError("Failed to register screen with backend", e)
+                logError("Failed to save screen to backend", e)
                 callback?.onError(e)
             }
         }
@@ -295,14 +386,14 @@ class VikaSDK private constructor(
             logDebug("Registered screen locally: ${screen.screenId}")
         }
 
-        // Register all screens with backend
+        // Save all screens to backend
         scope.launch {
             try {
-                val response = apiClient.registerScreens(screens)
-                logDebug("Screens registered with backend: ${response.registeredCount}")
-                callback?.onSuccess(response.registeredCount)
+                val response = apiClient.saveScreens(screens)
+                logDebug("Screens saved to backend: ${response.updatedScreenCount}")
+                callback?.onSuccess(response.updatedScreenCount)
             } catch (e: Exception) {
-                logError("Failed to register screens with backend", e)
+                logError("Failed to save screens to backend", e)
                 callback?.onError(e)
             }
         }
@@ -319,44 +410,76 @@ class VikaSDK private constructor(
     }
 
     /**
-     * Send voice recording to backend and get response
+     * Listener interface for conversation processing results.
+     */
+    interface ConversationListener {
+        /**
+         * Called when a conversation has been processed.
+         *
+         * @param event The processed conversation event with transcription and navigation
+         */
+        fun onConversationProcessed(event: ConversationProcessedEvent)
+
+        /**
+         * Called when an error occurs.
+         *
+         * @param error The error that occurred
+         */
+        fun onError(error: VikaError)
+    }
+
+    /**
+     * Send audio for conversation processing.
+     *
+     * Results will be delivered through the ConversationListener via Socket.IO.
+     *
+     * @param audioFile Audio file to send (mp3, wav, m4a, ogg, webm)
+     * @return ConversationResponse with conversation ID for tracking
+     */
+    suspend fun sendConversation(audioFile: File): ConversationResponse {
+        return withContext(Dispatchers.IO) {
+            apiClient.sendConversation(audioFile)
+        }
+    }
+
+    /**
+     * Send audio for conversation processing with callback.
      *
      * @param audioFile Audio file to send
-     * @param callback Callback for recording response
+     * @param callback Callback for immediate response (conversation ID)
      */
-    suspend fun sendRecording(
+    fun sendConversation(
         audioFile: File,
-        callback: RecordingCallback
+        callback: ConversationCallback
     ) {
-        withContext(Dispatchers.Main) {
+        scope.launch {
             try {
                 callback.onStarted()
 
                 val response = withContext(Dispatchers.IO) {
-                    apiClient.sendRecording(audioFile, registeredScreens.values.toList())
+                    apiClient.sendConversation(audioFile)
                 }
 
-                logDebug("Recording response: transcription=${response.transcription}")
-
-                // Handle navigation if present
-                response.navigation?.let { nav ->
-                    val screen = registeredScreens[nav.screenId]
-                    if (screen != null && nav.confidence >= config.minConfidenceThreshold) {
-                        logDebug("Will navigate to: ${nav.deepLink}")
-                    }
-                }
-
+                logDebug("Conversation submitted: ${response.conversationId}")
                 callback.onSuccess(response)
-
             } catch (e: Exception) {
-                logError("Send recording failed", e)
+                logError("Send conversation failed", e)
                 callback.onError(e)
             }
         }
     }
 
     /**
-     * Execute navigation from recording response
+     * Callback interface for conversation submission
+     */
+    interface ConversationCallback {
+        fun onStarted()
+        fun onSuccess(response: ConversationResponse)
+        fun onError(error: Throwable)
+    }
+
+    /**
+     * Execute navigation from deep link
      *
      * @param deepLink Deep link to navigate to
      */
@@ -365,15 +488,6 @@ class VikaSDK private constructor(
             NavigationType.DeepLink(deepLink),
             context
         )
-    }
-
-    /**
-     * Callback interface for recording response
-     */
-    interface RecordingCallback {
-        fun onStarted()
-        fun onSuccess(response: RecordingData)
-        fun onError(error: Throwable)
     }
 
     /**
@@ -392,6 +506,17 @@ class VikaSDK private constructor(
      * @param options UI customization options including display mode, theme, and branding
      */
     fun openVikaSDK(context: Context, options: VikaUIOptions) {
+        // Check if backend is initialized
+        if (!isBackendInitialized) {
+            logError("Cannot open VIKA SDK: Backend not initialized")
+            Toast.makeText(
+                context,
+                "VIKA SDK not ready. Please check your network connection.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
         // Store options for Activity to access
         currentUIOptions = options
 
@@ -406,6 +531,13 @@ class VikaSDK private constructor(
             context.startActivity(intent)
         }
     }
+
+    /**
+     * Check if SDK backend is initialized.
+     *
+     * @return True if backend initialization was successful
+     */
+    fun isBackendReady(): Boolean = isBackendInitialized
 
     /**
      * Navigate from natural language query
@@ -429,15 +561,6 @@ class VikaSDK private constructor(
                     analyticsTracker.trackNavigationError(query, error)
                     return@withContext
                 }
-
-                // Call API
-                /*val result = withContext(Dispatchers.IO) {
-                    apiClient.queryNavigation(
-                        query = query,
-                        screens = registeredScreens.values.toList(),
-                        options = options
-                    )
-                }*/
 
                 val result = NavigationResult(
                     screenId = "home",
@@ -518,12 +641,22 @@ class VikaSDK private constructor(
     }
 
     /**
+     * Get the SDK configuration.
+     */
+    fun getConfig(): SDKConfig = config
+
+    /**
      * Clean up resources
      */
     private fun cleanup() {
+        socketManager.disconnect()
+        apiClient.clearSession()
+        sessionManager.clearSession()
         scope.cancel()
         registeredScreens.clear()
         navigationHandlers.clear()
+        conversationListener = null
+        isBackendInitialized = false
         logDebug("SDK cleaned up")
     }
 
@@ -536,12 +669,12 @@ class VikaSDK private constructor(
     }
 
     /**
-     * Send recording and get result with typed error handling.
+     * Send conversation and get result with typed error handling.
      *
      * @param audioFile Audio file to send
-     * @return Result containing RecordingData or VikaError
+     * @return Result containing ConversationResponse or VikaError
      */
-    suspend fun sendRecordingAsync(audioFile: File): VikaResult<RecordingData> {
+    suspend fun sendConversationAsync(audioFile: File): VikaResult<ConversationResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 // Check rate limiting
@@ -550,18 +683,15 @@ class VikaSDK private constructor(
                 }
 
                 // Check session validity
-                if (!sessionManager.hasValidSession()) {
+                if (!sessionManager.hasSession()) {
                     return@withContext VikaResult.failure(
-                        VikaError.Authentication("Session expired. Please reinitialize.")
+                        VikaError.Authentication("Session not available. Please reinitialize.")
                     )
                 }
 
-                val response = apiClient.sendRecording(
-                    audioFile,
-                    registeredScreens.values.toList()
-                )
+                val response = apiClient.sendConversation(audioFile)
 
-                logDebug("Recording response received")
+                logDebug("Conversation submitted: ${response.conversationId}")
                 VikaResult.success(response)
             } catch (e: NetworkException) {
                 VikaResult.failure(VikaError.Network(e.message ?: "Network error", e))
@@ -574,12 +704,12 @@ class VikaSDK private constructor(
     }
 
     /**
-     * Register screens and get result with typed error handling.
+     * Save screens and get result with typed error handling.
      *
-     * @param screens List of screens to register
-     * @return Result containing registered count or VikaError
+     * @param screens List of screens to save
+     * @return Result containing updated count or VikaError
      */
-    suspend fun registerScreensAsync(screens: List<ScreenRegistration>): VikaResult<Int> {
+    suspend fun saveScreensAsync(screens: List<ScreenRegistration>): VikaResult<Int> {
         return withContext(Dispatchers.IO) {
             try {
                 // Register locally first
@@ -592,9 +722,9 @@ class VikaSDK private constructor(
                     return@withContext VikaResult.failure(VikaError.RateLimited())
                 }
 
-                val response = apiClient.registerScreens(screens)
-                logDebug("Registered ${response.registeredCount} screens with backend")
-                VikaResult.success(response.registeredCount)
+                val response = apiClient.saveScreens(screens)
+                logDebug("Saved ${response.updatedScreenCount} screens to backend")
+                VikaResult.success(response.updatedScreenCount)
             } catch (e: NetworkException) {
                 VikaResult.failure(VikaError.Network(e.message ?: "Network error", e))
             } catch (e: Exception) {

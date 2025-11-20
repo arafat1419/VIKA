@@ -1,11 +1,10 @@
 package com.vika.sdk.network.api
 
-import com.vika.sdk.network.models.ApiResponse
+import com.vika.sdk.network.models.ConversationResponse
 import com.vika.sdk.network.models.InitializeData
 import com.vika.sdk.network.models.InitializeRequest
-import com.vika.sdk.network.models.RecordingData
-import com.vika.sdk.network.models.RegisterScreensData
-import com.vika.sdk.network.models.RegisterScreensRequest
+import com.vika.sdk.network.models.ScreenData
+import com.vika.sdk.network.models.ScreenRequest
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -17,42 +16,45 @@ import retrofit2.http.Part
  * Retrofit API interface for VIKA backend communication.
  *
  * Defines endpoints for SDK initialization, screen registration,
- * and voice recording submission.
+ * and audio conversation submission.
  */
 internal interface NavigationApi {
     /**
      * Initialize SDK and validate credentials.
      *
-     * @param request Initialization request with API key and app info
+     * @param request Initialization request with API key and signature
      * @return Response containing session ID on success
      */
-    @POST("initialize")
+    @POST("auth/initialize")
     suspend fun initialize(
         @Body request: InitializeRequest
-    ): Response<ApiResponse<InitializeData>>
+    ): Response<InitializeData>
 
     /**
-     * Register screens for voice navigation.
+     * Save screens for voice navigation.
      *
-     * @param request Registration request with screen list
-     * @return Response containing registered count
+     * Requires Bearer token authentication with session ID.
+     *
+     * @param request Screen request with screen list
+     * @return Response containing updated screen count
      */
-    @POST("register-screens")
-    suspend fun registerScreens(
-        @Body request: RegisterScreensRequest
-    ): Response<ApiResponse<RegisterScreensData>>
+    @POST("screen/")
+    suspend fun saveScreens(
+        @Body request: ScreenRequest
+    ): Response<ScreenData>
 
     /**
-     * Send voice recording and get navigation response.
+     * Send audio for conversation processing.
      *
-     * @param audio Audio file as multipart
-     * @param sessionId Current session ID
-     * @return Response with transcription, AI reply, and navigation data
+     * Requires Bearer token authentication with session ID.
+     * Results are delivered through Socket.IO 'conversation_processed' event.
+     *
+     * @param audio Audio file as multipart (mp3, wav, m4a, ogg, webm)
+     * @return Response with conversation ID for tracking
      */
     @Multipart
-    @POST("send-recording")
-    suspend fun sendRecording(
-        @Part audio: MultipartBody.Part,
-        @Part("session_id") sessionId: String
-    ): Response<ApiResponse<RecordingData>>
+    @POST("conversation/")
+    suspend fun sendConversation(
+        @Part audio: MultipartBody.Part
+    ): Response<ConversationResponse>
 }

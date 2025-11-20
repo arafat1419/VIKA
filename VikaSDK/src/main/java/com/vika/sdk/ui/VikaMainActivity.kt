@@ -64,7 +64,6 @@ import androidx.core.graphics.drawable.toBitmap
 import com.vika.sdk.VikaSDK
 import com.vika.sdk.models.VikaLanguage
 import com.vika.sdk.models.VikaUIOptions
-import com.vika.sdk.network.models.RecordingData
 import com.vika.sdk.ui.ui.theme.VikaCustomTheme
 import com.vika.sdk.ui.ui.theme.VikaTheme
 import com.vika.sdk.utils.WaveformView
@@ -450,27 +449,49 @@ internal fun AudioRecordUI(
             scope.launch {
                 try {
                     val audioFile = java.io.File(fileName)
-                    VikaSDK.getInstance().sendRecording(
+
+                    // Set up listener for socket response before sending
+                    VikaSDK.getInstance()
+                        .setConversationListener(object : VikaSDK.ConversationListener {
+                            override fun onConversationProcessed(event: com.vika.sdk.network.models.ConversationProcessedEvent) {
+                                // Store reply text and navigation for after playback
+                                pendingReplyText = event.result.replyText
+                                event.result.navigation?.let { nav ->
+                                    pendingNavigation = nav.deepLink
+                                    pendingScreenName = nav.screenName
+                                }
+
+                                // Play back the reply audio if available, otherwise play recorded audio
+                                val replyAudioUrl = event.result.replyAudioUrl
+                                if (replyAudioUrl != null) {
+                                    val fullUrl =
+                                        com.vika.sdk.utils.AudioHelper.getFullAudioUrl(replyAudioUrl)
+                                    // For now, play the recorded audio
+                                    // TODO: Download and play the reply audio from fullUrl
+                                    play(fileName)
+                                } else {
+                                    play(fileName)
+                                }
+                            }
+
+                            override fun onError(error: com.vika.sdk.models.VikaError) {
+                                listeningText = VikaStrings.error(language, error.message)
+                                // Still play back the recording on error
+                                play(fileName)
+                            }
+                        })
+
+                    // Send conversation - result comes via socket
+                    VikaSDK.getInstance().sendConversation(
                         audioFile = audioFile,
-                        callback = object : VikaSDK.RecordingCallback {
+                        callback = object : VikaSDK.ConversationCallback {
                             override fun onStarted() {
                                 listeningText = VikaStrings.sending(language)
                             }
 
-                            override fun onSuccess(response: RecordingData) {
-                                // Store reply text and navigation for after playback
-                                pendingReplyText = response.replyText
-                                response.navigation?.let { nav ->
-                                    pendingNavigation = nav.deepLink
-                                    // Look up screen name from registered screens
-                                    val screen = VikaSDK.getInstance().getRegisteredScreens()
-                                        .find { it.screenId == nav.screenId }
-                                    pendingScreenName = screen?.screenName
-                                }
-
-                                // Play back the recorded audio (until BE provides reply audio)
-                                // TODO: When BE is ready, download and play response.replyAudioUrl
-                                play(fileName)
+                            override fun onSuccess(response: com.vika.sdk.network.models.ConversationResponse) {
+                                // Audio submitted, waiting for socket result
+                                listeningText = VikaStrings.processing(language)
                             }
 
                             override fun onError(error: Throwable) {

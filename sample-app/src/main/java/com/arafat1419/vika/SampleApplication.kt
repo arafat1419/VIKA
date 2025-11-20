@@ -13,7 +13,7 @@ class SampleApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val config = SDKConfig.Builder("your-api-key-here")
+        val config = SDKConfig.Builder("J6pruwy4Pz8GjJ8pAKsa7a8U3wQ3Z1X7")
             .minConfidenceThreshold(0.75f)
             .analyticsEnabled(true)
             .debugMode(BuildConfig.DEBUG)
