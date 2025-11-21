@@ -18,7 +18,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        buildConfigField("String", "SDK_VERSION", "\"1.0.0\"")
+        buildConfigField("String", "SDK_VERSION", "\"1.0.1\"")
         buildConfigField("String", "BASE_URL", "\"https://vika-ng.ekoptra.com\"")
         buildConfigField("String", "SOCKET_URL", "\"https://vika-ng.ekoptra.com\"")
     }
@@ -104,7 +104,7 @@ afterEvaluate {
 
                 groupId = "com.vika.sdk"
                 artifactId = "vika-sdk"
-                version = "1.0.0"
+                version = "1.0.1"
 
                 pom {
                     name.set("VIKA")

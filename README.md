@@ -83,7 +83,7 @@ Add to your app's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.vika.sdk:vika-sdk:1.0.0")
+    implementation("com.vika.sdk:vika-sdk:1.0.1")
 }
 ```
 
@@ -241,7 +241,18 @@ For licensing inquiries, contact the VIKA team.
 
 ## Changelog
 
-### Version 1.0.0 (Current)
+### Version 1.0.1 (Current)
+
+**Changes:**
+
+- Repository migrated to public visibility
+- Updated README with separate sections for SDK consumers and contributors
+- Added Contributing guidelines and community support links
+- Implemented audio reply playback functionality
+- Improved audio file cleanup after playback
+- Sample app now uses local project dependency for easier development
+
+### Version 1.0.0
 
 **Features:**
 

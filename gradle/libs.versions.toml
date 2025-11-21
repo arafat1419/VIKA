@@ -23,7 +23,7 @@ securityCrypto = "1.1.0"
 socketIo = "2.1.0"
 navigationRuntimeKtx = "2.9.6"
 navigationCompose = "2.9.6"
-vikaSdk = "1.0.0"
+vikaSdk = "1.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
