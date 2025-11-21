@@ -41,13 +41,11 @@ VIKA/
 
 ## Getting Started
 
-### Installation
+### For Developers Using the SDK
 
-#### Step 1: Get Access
+If you want to integrate VIKA SDK into your own Android project:
 
-Contact the VIKA team to be added as a collaborator to this repository.
-
-#### Step 2: Configure Repository
+#### Step 1: Configure GitHub Packages
 
 Add to your project's `settings.gradle.kts`:
 
@@ -69,16 +67,43 @@ dependencyResolutionManagement {
 }
 ```
 
-#### Step 3: Add Dependency
+Create or update `local.properties` in your project root:
+
+```properties
+github.user=your-github-username
+github.token=your-github-personal-access-token
+```
+
+> **Note:** GitHub Packages requires authentication even for public repositories. Create
+> a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with `read:packages` scope.
+
+#### Step 2: Add Dependency
 
 Add to your app's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
     implementation("com.vika.sdk:vika-sdk:1.0.0")
-    // All SDK dependencies are resolved automatically!
 }
 ```
+
+### For Contributors / Building from Source
+
+If you want to build or contribute to this project:
+
+```bash
+# Clone the repository
+git clone https://github.com/arafat1419/VIKA.git
+cd VIKA
+
+# Build the project (no GitHub credentials needed)
+./gradlew build
+
+# Run the sample app
+./gradlew :sample-app:installDebug
+```
+
+The `sample-app` uses the local `:VikaSDK` module, so no external authentication is required.
 
 ### Quick Start
 
@@ -188,11 +213,23 @@ The `sample-app` module demonstrates:
 
 Run the sample app to see VIKA in action!
 
+## Contributing
+
+We welcome contributions! To contribute:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+See [CLAUDE.md](CLAUDE.md) for detailed project architecture and development guidelines.
+
 ## Support
 
-- Issues: [GitHub Issues](https://github.com/arafat1419/VIKA/issues)
-- Contact: support@vika.com (replace with actual support contact)
-- Documentation: See this README and `sample-app/` for integration examples
+- **Issues:** [GitHub Issues](https://github.com/arafat1419/VIKA/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/arafat1419/VIKA/discussions)
+- **Documentation:** See this README and `sample-app/` for integration examples
 
 ## License
 

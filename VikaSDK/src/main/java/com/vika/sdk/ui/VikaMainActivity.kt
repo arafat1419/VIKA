@@ -29,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
@@ -202,7 +201,7 @@ internal fun AudioRecordScreen(
                 modifier = Modifier.padding(32.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.PlayArrow,
+                    imageVector = Icons.Default.Mic,
                     contentDescription = null,
                     tint = colors.text,
                     modifier = Modifier.size(64.dp)
@@ -264,6 +263,7 @@ internal fun AudioRecordUI(
     onStopRecording: () -> Unit,
     onNavigate: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val colors = VikaTheme.colors
 
@@ -287,6 +287,7 @@ internal fun AudioRecordUI(
     var pendingNavigation by remember { mutableStateOf<String?>(null) }
     var pendingReplyText by remember { mutableStateOf<String?>(null) }
     var pendingScreenName by remember { mutableStateOf<String?>(null) }
+    var downloadedAudioFile by remember { mutableStateOf<java.io.File?>(null) }
 
     var mediaRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
@@ -372,6 +373,18 @@ internal fun AudioRecordUI(
         stopVisualizer()
         isPlaying = false
         amplitude = 0
+
+        // Delete downloaded audio file if it exists
+        downloadedAudioFile?.let { file ->
+            try {
+                if (file.exists()) {
+                    file.delete()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            downloadedAudioFile = null
+        }
 
         // Show reply text and navigate after delay
         val replyText = pendingReplyText
@@ -464,11 +477,24 @@ internal fun AudioRecordUI(
                                 // Play back the reply audio if available, otherwise play recorded audio
                                 val replyAudioUrl = event.result.replyAudioUrl
                                 if (replyAudioUrl != null) {
-                                    val fullUrl =
-                                        com.vika.sdk.utils.AudioHelper.getFullAudioUrl(replyAudioUrl)
-                                    // For now, play the recorded audio
-                                    // TODO: Download and play the reply audio from fullUrl
-                                    play(fileName)
+                                    scope.launch {
+                                        try {
+                                            listeningText = VikaStrings.processing(language)
+                                            val cacheDir = context.externalCacheDir
+                                            val downloadedFile =
+                                                com.vika.sdk.utils.AudioHelper.downloadAudio(
+                                                    audioUrl = replyAudioUrl,
+                                                    outputDir = cacheDir!!,
+                                                    fileName = "reply_audio.wav"
+                                                )
+                                            downloadedAudioFile = downloadedFile
+                                            play(downloadedFile.absolutePath)
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                            // Fallback to playing recorded audio on download error
+                                            play(fileName)
+                                        }
+                                    }
                                 } else {
                                     play(fileName)
                                 }
@@ -534,7 +560,6 @@ internal fun AudioRecordUI(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 appLogoResId?.let { logoRes ->
-                    val context = LocalContext.current
                     val density = LocalDensity.current
                     val sizePx = with(density) { 32.dp.toPx().toInt() }
                     val drawable = ContextCompat.getDrawable(context, logoRes)

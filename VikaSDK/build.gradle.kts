@@ -96,7 +96,6 @@ dependencies {
 }
 
 // GitHub Packages Publishing Configuration
-// For private SDK distribution to authorized clients
 afterEvaluate {
     publishing {
         publications {
