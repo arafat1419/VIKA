@@ -8,11 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val JKNDarkColorScheme = darkColorScheme(
-    primary = JKNGreen,
+    primary = JKNBlue,
     onPrimary = JKNTextOnPrimary,
-    primaryContainer = JKNGreenDark,
+    primaryContainer = JKNBlueDark,
     onPrimaryContainer = JKNTextOnPrimary,
-    secondary = JKNBlue,
+    secondary = JKNGreen,
     onSecondary = JKNTextOnPrimary,
     tertiary = JKNOrange,
     onTertiary = JKNTextOnPrimary,
@@ -29,11 +29,11 @@ private val JKNDarkColorScheme = darkColorScheme(
 )
 
 private val JKNLightColorScheme = lightColorScheme(
-    primary = JKNGreen,
+    primary = JKNBlue,
     onPrimary = JKNTextOnPrimary,
-    primaryContainer = JKNGreenLight,
+    primaryContainer = JKNBlueLight,
     onPrimaryContainer = JKNTextPrimary,
-    secondary = JKNBlue,
+    secondary = JKNGreen,
     onSecondary = JKNTextOnPrimary,
     tertiary = JKNOrange,
     onTertiary = JKNTextOnPrimary,

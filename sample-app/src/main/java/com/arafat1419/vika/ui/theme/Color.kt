@@ -7,6 +7,11 @@ val JKNGreen = Color(0xFF00A651)
 val JKNGreenDark = Color(0xFF008A43)
 val JKNGreenLight = Color(0xFF33B76E)
 
+// Blue Color Variants
+val JKNBlue = Color(0xFF0066CC)
+val JKNBlueDark = Color(0xFF0052A3)
+val JKNBlueLight = Color(0xFF3385D6)
+
 // Background Colors
 val JKNBackgroundLight = Color(0xFFFAFAFA)
 val JKNBackgroundDark = Color(0xFF1C1C1C)
@@ -15,7 +20,6 @@ val JKNSurfaceDark = Color(0xFF2C2C2C)
 
 // Accent Colors
 val JKNOrange = Color(0xFFFF8C00)
-val JKNBlue = Color(0xFF0066CC)
 val JKNRed = Color(0xFFD32F2F)
 
 // Text Colors
