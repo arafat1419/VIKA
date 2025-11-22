@@ -83,7 +83,7 @@ Add to your app's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.vika.sdk:vika-sdk:1.0.1")
+    implementation("com.vika.sdk:vika-sdk:1.0.2")
 }
 ```
 
@@ -241,7 +241,19 @@ For licensing inquiries, contact the VIKA team.
 
 ## Changelog
 
-### Version 1.0.1 (Current)
+### Version 1.0.2 (Current)
+
+**Changes:**
+
+- Refactored logo and branding
+- Added scroll view for health facility list
+- Implemented chat history with session-based storage
+- Added Info Lokasi Faskes (Health Facility Location) screen
+- Added Ambil Antrean (Take Queue) screen
+- Enhanced navigation UX/UI with custom menu icons
+- Implemented JKN-themed UI with bottom navigation
+
+### Version 1.0.1
 
 **Changes:**
 
