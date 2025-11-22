@@ -143,7 +143,21 @@ class MainActivity : ComponentActivity() {
             "info_virtual_account" -> navController.navigate("info_virtual_account")
             "minum_obat" -> navController.navigate("minum_obat")
             "tren_penyakit_daerah" -> navController.navigate("tren_penyakit_daerah")
-            "antrean_online" -> navController.navigate("antrean_online")
+            "antrean_online" -> {
+                val poli = uri.getQueryParameter("poli") ?: ""
+                val tanggal = uri.getQueryParameter("tanggal") ?: ""
+                val jadwal = uri.getQueryParameter("jadwal") ?: ""
+                val keluhan = uri.getQueryParameter("keluhan") ?: ""
+
+                val route = buildString {
+                    append("antrean_online")
+                    append("?poli=$poli")
+                    append("&tanggal=$tanggal")
+                    append("&jadwal=$jadwal")
+                    append("&keluhan=$keluhan")
+                }
+                navController.navigate(route)
+            }
         }
     }
 }
@@ -172,8 +186,8 @@ fun SampleApp(navController: NavHostController) {
                     coroutineScope.launch {
                         val options = VikaUIOptions.builder()
                             .displayMode(VikaDisplayMode.DIALOG)
-                            .appLogo(R.mipmap.ic_launcher)
-                            .appTitle(context.getString(R.string.app_name))
+                            .appLogo(R.drawable.vika_logo)
+                            .appTitle("VIKA New Generation")
                             .dismissOnTouchOutside(true)
                             .theme(VikaThemeConfig.DEFAULT_LIGHT)
                             .build()
@@ -362,8 +376,39 @@ fun SampleApp(navController: NavHostController) {
                     navController = navController
                 )
             }
-            composable("antrean_online") {
-                AmbilAntreanScreen(navController = navController)
+            composable(
+                route = "antrean_online?poli={poli}&tanggal={tanggal}&jadwal={jadwal}&keluhan={keluhan}",
+                arguments = listOf(
+                    androidx.navigation.navArgument("poli") {
+                        type = androidx.navigation.NavType.StringType
+                        defaultValue = "Poli Umum"
+                    },
+                    androidx.navigation.navArgument("tanggal") {
+                        type = androidx.navigation.NavType.StringType
+                        defaultValue = "25/11/2025"
+                    },
+                    androidx.navigation.navArgument("jadwal") {
+                        type = androidx.navigation.NavType.StringType
+                        defaultValue = "09:00 - 10:00"
+                    },
+                    androidx.navigation.navArgument("keluhan") {
+                        type = androidx.navigation.NavType.StringType
+                        defaultValue = "Sakit Kepala"
+                    }
+                )
+            ) { backStackEntry ->
+                val poli = backStackEntry.arguments?.getString("poli") ?: ""
+                val tanggal = backStackEntry.arguments?.getString("tanggal") ?: ""
+                val jadwal = backStackEntry.arguments?.getString("jadwal") ?: ""
+                val keluhan = backStackEntry.arguments?.getString("keluhan") ?: ""
+
+                AmbilAntreanScreen(
+                    navController = navController,
+                    prefillPoli = poli,
+                    prefillTanggal = tanggal,
+                    prefillJadwal = jadwal,
+                    prefillKeluhan = keluhan
+                )
             }
         }
     }
@@ -793,25 +838,34 @@ fun FacilityCard(facility: HealthcareFacility) {
 // Ambil Antrean / Antrean Online Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AmbilAntreanScreen(navController: NavHostController) {
+fun AmbilAntreanScreen(
+    navController: NavHostController,
+    prefillPoli: String = "",
+    prefillTanggal: String = "",
+    prefillJadwal: String = "",
+    prefillKeluhan: String = ""
+) {
     val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
 
-    // Form state
-    var selectedPoli by remember { mutableStateOf("") }
+    // Form state - prefill with deep link parameters if available
+    var selectedPoli by remember { mutableStateOf(prefillPoli) }
     var expandedPoli by remember { mutableStateOf(false) }
     var selectedDate by remember {
         mutableStateOf(
-            SimpleDateFormat(
-                "dd/MM/yyyy",
-                Locale.getDefault()
-            ).format(Date())
+            if (prefillTanggal.isNotEmpty()) {
+                prefillTanggal
+            } else {
+                SimpleDateFormat(
+                    "dd/MM/yyyy",
+                    Locale.getDefault()
+                ).format(Date())
+            }
         )
     }
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedSchedule by remember { mutableStateOf("") }
+    var selectedSchedule by remember { mutableStateOf(prefillJadwal) }
     var expandedSchedule by remember { mutableStateOf(false) }
-    var keluhan by remember { mutableStateOf("") }
+    var keluhan by remember { mutableStateOf(prefillKeluhan) }
 
     // Dummy data
     val poliOptions = listOf(
