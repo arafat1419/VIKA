@@ -1,7 +1,6 @@
 package com.arafat1419.vika
 
 import android.app.Application
-import com.vika.sdk.BuildConfig
 import com.vika.sdk.VikaSDK
 import com.vika.sdk.models.NavigationType
 import com.vika.sdk.models.SDKConfig
@@ -13,7 +12,7 @@ class SampleApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val config = SDKConfig.Builder("J6pruwy4Pz8GjJ8pAKsa7a8U3wQ3Z1X7")
+        val config = SDKConfig.Builder(BuildConfig.VIKA_API_KEY)
             .minConfidenceThreshold(0.75f)
             .analyticsEnabled(true)
             .debugMode(BuildConfig.DEBUG)
