@@ -25,35 +25,78 @@
             </intent-filter>
 
             <!-- Deep link handlers -->
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="bpjskes" />
-                <data android:host="info_program_jkn" />
-                <data android:host="telehealth" />
-                <data android:host="info_riwayat_pelayanan" />
-                <data android:host="bugar" />
-                <data android:host="new_rehap" />
-                <data android:host="penambahan_peserta" />
-                <data android:host="info_peserta" />
-                <data android:host="sos" />
-                <data android:host="info_lokasi_faskes" />
-                <data android:host="perubahan_data_peserta" />
-                <data android:host="pengaduan_layanan_jkn" />
-                <data android:host="skrining_riwayat_kesehatan" />
-                <data android:host="pendaftaran_pelayanan" />
-                <data android:host="info_ketersediaan_tempat_tidur" />
-                <data android:host="info_jadwal_tindakan_operasi" />
-                <data android:host="info_iuran" />
-                <data android:host="pendaftaran_auto_debit" />
-                <data android:host="info_riwayat_pembayaran" />
-                <data android:host="info_virtual_account" />
-                <data android:host="minum_obat" />
-                <data android:host="tren_penyakit_daerah" />
-                <data android:host="antrean_online" />
+                <data
+                    android:host="info_program_jkn"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="telehealth"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_riwayat_pelayanan"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="bugar"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="new_rehap"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="penambahan_peserta"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_peserta"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="sos"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_lokasi_faskes"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="perubahan_data_peserta"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="pengaduan_layanan_jkn"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="skrining_riwayat_kesehatan"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="pendaftaran_pelayanan"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_ketersediaan_tempat_tidur"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_jadwal_tindakan_operasi"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_iuran"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="pendaftaran_auto_debit"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_riwayat_pembayaran"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="info_virtual_account"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="minum_obat"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="tren_penyakit_daerah"
+                    android:scheme="bpjskes" />
+                <data
+                    android:host="antrean_online"
+                    android:scheme="bpjskes" />
             </intent-filter>
         </activity>
     </application>

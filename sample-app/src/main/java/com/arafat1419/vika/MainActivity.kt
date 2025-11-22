@@ -1,6 +1,7 @@
 package com.arafat1419.vika
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -55,6 +56,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,23 +91,20 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
-    private var pendingIntent: Intent? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        pendingIntent = intent
 
         setContent {
             VIKATheme {
                 val navController = rememberNavController()
+                val currentIntent by rememberUpdatedState(intent)
 
                 SampleApp(navController)
 
-                LaunchedEffect(Unit) {
-                    pendingIntent?.let {
-                        handleIntent(it, navController)
-                        pendingIntent = null
+                LaunchedEffect(currentIntent) {
+                    currentIntent?.data?.let { uri ->
+                        Log.d("MainActivity", "Processing deep link: $uri")
+                        handleDeepLink(uri, navController)
                     }
                 }
             }
@@ -114,12 +113,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        pendingIntent = intent
+        Log.d("MainActivity", "Received new intent with data: ${intent.data}")
+        setIntent(intent)
     }
 
-    private fun handleIntent(intent: Intent, navController: NavHostController) {
-        val uri = intent.data ?: return
-        Log.d("MainActivity", "Received deep link: $uri")
+    internal fun handleDeepLink(uri: Uri, navController: NavHostController) {
+        Log.d("MainActivity", "Handling deep link - URI: $uri")
+        Log.d("MainActivity", "Scheme: ${uri.scheme}, Host: ${uri.host}, Query: ${uri.query}")
 
         when (uri.host) {
             "info_program_jkn" -> navController.navigate("info_program_jkn")
@@ -144,19 +144,35 @@ class MainActivity : ComponentActivity() {
             "minum_obat" -> navController.navigate("minum_obat")
             "tren_penyakit_daerah" -> navController.navigate("tren_penyakit_daerah")
             "antrean_online" -> {
-                val poli = uri.getQueryParameter("poli") ?: ""
-                val tanggal = uri.getQueryParameter("tanggal") ?: ""
-                val jadwal = uri.getQueryParameter("jadwal") ?: ""
-                val keluhan = uri.getQueryParameter("keluhan") ?: ""
+                val poli = uri.getQueryParameter("poli")?.ifEmpty { "Poli Umum" } ?: "Poli Umum"
+                val tanggal =
+                    uri.getQueryParameter("tanggal")?.ifEmpty { "25/11/2025" } ?: "25/11/2025"
+                val jadwal =
+                    uri.getQueryParameter("jadwal")?.ifEmpty { "09:00 - 10:00" } ?: "09:00 - 10:00"
+                val keluhan =
+                    uri.getQueryParameter("keluhan")?.ifEmpty { "Sakit Kepala" } ?: "Sakit Kepala"
 
-                val route = buildString {
-                    append("antrean_online")
-                    append("?poli=$poli")
-                    append("&tanggal=$tanggal")
-                    append("&jadwal=$jadwal")
-                    append("&keluhan=$keluhan")
+                Log.d(
+                    "MainActivity",
+                    "Antrean Online params - poli: '$poli', tanggal: '$tanggal', jadwal: '$jadwal', keluhan: '$keluhan'"
+                )
+
+                val route = "antrean_online" +
+                        "?poli=${Uri.encode(poli)}" +
+                        "&tanggal=${Uri.encode(tanggal)}" +
+                        "&jadwal=${Uri.encode(jadwal)}" +
+                        "&keluhan=${Uri.encode(keluhan)}"
+
+                Log.d("MainActivity", "Navigating to route: $route")
+
+                try {
+                    navController.navigate(route) {
+                        launchSingleTop = true
+                    }
+                    Log.d("MainActivity", "Successfully navigated")
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error navigating", e)
                 }
-                navController.navigate(route)
             }
         }
     }

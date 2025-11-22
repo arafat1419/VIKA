@@ -141,10 +141,16 @@ class SampleApplication : Application() {
                 ScreenRegistration(
                     screenId = "pendaftaran_pelayanan",
                     screenName = "Pendaftaran Pelayanan",
-                    description = "Fitur antrean online memungkinkan peserta mendaftar layanan di fasilitas kesehatan tanpa harus datang lebih awal. Peserta dapat memilih faskes, poli tujuan, jadwal kedatangan, serta menerima nomor antrean digital. Layanan ini membantu mengurangi waktu tunggu dan memperbaiki pengalaman pelayanan.",
+                    description = "Fitur pendaftaran pelayanan memungkinkan peserta melakukan pengajuan layanan kesehatan secara mandiri sebelum tiba di fasilitas kesehatan. Peserta dapat memilih jenis pelayanan, melengkapi data yang diperlukan, serta memastikan informasi administrasi sudah sesuai. Fitur ini membantu mempercepat proses verifikasi saat tiba di faskes dan meningkatkan efisiensi layanan.",
                     deepLink = "bpjskes://pendaftaran_pelayanan",
                     navigationType = NavigationType.DeepLink("bpjskes://pendaftaran_pelayanan"),
-                    keywords = listOf("antrean", "pendaftaran", "online", "pelayanan", "faskes")
+                    keywords = listOf(
+                        "pendaftaran",
+                        "pelayanan",
+                        "administrasi",
+                        "faskes",
+                        "data peserta"
+                    )
                 ),
                 ScreenRegistration(
                     screenId = "info_ketersediaan_tempat_tidur",
