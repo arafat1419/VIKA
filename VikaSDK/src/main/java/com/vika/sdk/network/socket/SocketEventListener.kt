@@ -1,6 +1,7 @@
 package com.vika.sdk.network.socket
 
 import com.vika.sdk.network.models.ConversationProcessedEvent
+import com.vika.sdk.network.models.TranscriptionCompletedEvent
 
 /**
  * Interface for receiving Socket.IO events from the VIKA backend.
@@ -20,6 +21,14 @@ interface SocketEventListener {
      * Called when disconnected from the socket server.
      */
     fun onDisconnected()
+
+    /**
+     * Called when transcription is completed.
+     * This is called before conversation_processed event.
+     *
+     * @param event The transcription result with conversation ID
+     */
+    fun onTranscriptionCompleted(event: TranscriptionCompletedEvent)
 
     /**
      * Called when a conversation has been processed by the backend.

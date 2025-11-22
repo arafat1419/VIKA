@@ -19,12 +19,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -42,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vika.sdk.VikaSDK
 import com.vika.sdk.models.VikaLanguage
 import com.vika.sdk.models.VikaUIOptions
@@ -267,6 +271,32 @@ internal fun AudioRecordUI(
     val scope = rememberCoroutineScope()
     val colors = VikaTheme.colors
 
+    // ViewModel for chat management
+    val viewModel: VikaViewModel = viewModel(
+        factory = VikaViewModelFactory(context)
+    )
+    val chatMessages by viewModel.chatMessages.collectAsState()
+    val listState = rememberLazyListState()
+
+    // Get session ID from SDK
+    val sessionId = try {
+        VikaSDK.getInstance().getSessionId()
+    } catch (_: Exception) {
+        null
+    }
+
+    // Load chat messages for current session
+    LaunchedEffect(sessionId) {
+        sessionId?.let { viewModel.loadMessages(it) }
+    }
+
+    // Auto-scroll to bottom when new messages arrive
+    LaunchedEffect(chatMessages.size) {
+        if (chatMessages.isNotEmpty()) {
+            listState.animateScrollToItem(chatMessages.size - 1)
+        }
+    }
+
     // Get language from SDK config
     val language = try {
         VikaSDK.getInstance().getLanguage()
@@ -330,7 +360,7 @@ internal fun AudioRecordUI(
                 start()
             }
             isRecording = true
-            listeningText = VikaStrings.listening(language)
+            listeningText = "" // Don't show "Listening" text, just show WaveForm
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -386,13 +416,15 @@ internal fun AudioRecordUI(
             downloadedAudioFile = null
         }
 
-        // Show reply text and navigate after delay
-        val replyText = pendingReplyText
+        // Clear status text after playback
+        listeningText = ""
+
+        // Navigate if there's a pending navigation
         val deepLink = pendingNavigation
         val screenName = pendingScreenName
 
         if (deepLink != null) {
-            // Show "Navigating to..." message
+            // Show "Navigating to..." message briefly
             listeningText = if (screenName != null) {
                 VikaStrings.navigatingTo(language, screenName)
             } else {
@@ -401,22 +433,17 @@ internal fun AudioRecordUI(
 
             // Navigate after delay
             scope.launch {
-                delay(2500) // 2.5 second delay to read the navigation message
+                delay(1500) // 1.5 second delay
                 pendingNavigation = null
                 pendingReplyText = null
                 pendingScreenName = null
+                listeningText = ""
                 onNavigate(deepLink)
             }
-        } else if (replyText != null) {
-            // Show reply text if no navigation
-            listeningText = replyText
-            scope.launch {
-                delay(2500)
-                pendingReplyText = null
-                listeningText = ""
-            }
         } else {
-            listeningText = ""
+            // Clear pending data
+            pendingReplyText = null
+            pendingScreenName = null
         }
     }
 
@@ -433,7 +460,7 @@ internal fun AudioRecordUI(
             setOnPreparedListener {
                 it.start()
                 isPlaying = true
-                listeningText = VikaStrings.speaking(language)
+                listeningText = "" // Don't show "Speaking" text, just show WaveForm
                 createVisualizer(it.audioSessionId)
             }
             setOnCompletionListener {
@@ -466,7 +493,29 @@ internal fun AudioRecordUI(
                     // Set up listener for socket response before sending
                     VikaSDK.getInstance()
                         .setConversationListener(object : VikaSDK.ConversationListener {
+                            override fun onTranscriptionCompleted(event: com.vika.sdk.network.models.TranscriptionCompletedEvent) {
+                                // Add user message and placeholder AI message to chat
+                                sessionId?.let { sid ->
+                                    viewModel.addUserMessage(
+                                        sessionId = sid,
+                                        conversationId = event.conversationId,
+                                        userTranscription = event.transcription
+                                    )
+                                }
+                                // Clear status text - transcription is now in chat
+                                listeningText = ""
+                            }
+
                             override fun onConversationProcessed(event: com.vika.sdk.network.models.ConversationProcessedEvent) {
+                                // Update placeholder AI message with actual reply
+                                sessionId?.let { sid ->
+                                    viewModel.updateAIMessage(
+                                        sessionId = sid,
+                                        conversationId = event.conversationId,
+                                        aiReply = event.result.replyText
+                                    )
+                                }
+
                                 // Store reply text and navigation for after playback
                                 pendingReplyText = event.result.replyText
                                 event.result.navigation?.let { nav ->
@@ -474,7 +523,7 @@ internal fun AudioRecordUI(
                                     pendingScreenName = nav.screenName
                                 }
 
-                                // Play back the reply audio if available, otherwise play recorded audio
+                                // Play back the reply audio if available
                                 val replyAudioUrl = event.result.replyAudioUrl
                                 if (replyAudioUrl != null) {
                                     scope.launch {
@@ -491,19 +540,17 @@ internal fun AudioRecordUI(
                                             play(downloadedFile.absolutePath)
                                         } catch (e: Exception) {
                                             e.printStackTrace()
-                                            // Fallback to playing recorded audio on download error
-                                            play(fileName)
+                                            // Clear status on error - don't play anything
+                                            listeningText = ""
                                         }
                                     }
-                                } else {
-                                    play(fileName)
                                 }
+                                // Don't play recorded audio - reply is already in chat
                             }
 
                             override fun onError(error: com.vika.sdk.models.VikaError) {
                                 listeningText = VikaStrings.error(language, error.message)
-                                // Still play back the recording on error
-                                play(fileName)
+                                // Don't play recording on error - just show error message
                             }
                         })
 
@@ -523,16 +570,14 @@ internal fun AudioRecordUI(
                             override fun onError(error: Throwable) {
                                 listeningText =
                                     VikaStrings.error(language, error.message ?: "Unknown error")
-
-                                // Still play back the recording on error
-                                play(fileName)
+                                // Don't play recording on error - just show error message
                             }
                         }
                     )
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    // Play back the recording on exception
-                    play(fileName)
+                    listeningText = VikaStrings.error(language, "Failed to send recording")
+                    // Don't play recording on exception - just show error message
                 }
             }
         } catch (e: Exception) {
@@ -540,7 +585,7 @@ internal fun AudioRecordUI(
         }
     }
 
-    Box(
+    Column(
         modifier = modifier
             .then(if (isCompact) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
             .background(colors.background)
@@ -548,13 +593,11 @@ internal fun AudioRecordUI(
     ) {
         // Top row with app branding and info icon
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // App logo and title - top start
+            // App logo and title
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -582,7 +625,7 @@ internal fun AudioRecordUI(
                 }
             }
 
-            // Info icon - top end
+            // Info icon
             IconButton(
                 onClick = { /* Handle info click */ }
             ) {
@@ -594,49 +637,30 @@ internal fun AudioRecordUI(
             }
         }
 
-        // Center content
-        Column(
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Middle: Chat list
+        LazyColumn(
+            state = listState,
             modifier = Modifier
-                .padding(top = 32.dp)
                 .fillMaxWidth()
-                .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Waveform view - square aspect ratio (smaller in compact mode)
-            WaveformView(
-                amplitude = amplitude,
-                isActive = isRecording || isPlaying,
-                color = colors.waveform,
-                modifier = if (isCompact) {
-                    Modifier.size(160.dp)
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                }
-            )
-
-            Spacer(modifier = Modifier.height(if (isCompact) 12.dp else 16.dp))
-
-            // Listening text
-            Text(
-                text = listeningText,
-                color = colors.text,
-                fontSize = if (isCompact) 16.sp else 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            items(chatMessages) { message ->
+                ChatBubble(message = message)
+            }
         }
 
-        // Bottom buttons row
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Bottom: Buttons row with waveform/text in between
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Record/Stop button - primary color background
+            // Record/Stop button (left)
             Card(
                 shape = RoundedCornerShape(32.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.primary),
@@ -657,19 +681,50 @@ internal fun AudioRecordUI(
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
-                        imageVector = if (isRecording || isPlaying) {
+                        imageVector = if (isRecording) {
                             Icons.Default.Stop
                         } else {
                             Icons.Default.Mic
                         },
-                        contentDescription = if (isRecording || isPlaying) "Stop" else "Record",
+                        contentDescription = if (isRecording) "Stop" else "Record",
                         tint = colors.background,
                         modifier = Modifier.padding(12.dp)
                     )
                 }
             }
 
-            // Close button - secondary color background
+            // Middle: WaveForm OR Status Text (mutually exclusive)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+                    .height(if (isCompact) 60.dp else 80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (listeningText.isNotEmpty()) {
+                    // Status text (processing, sending, error, etc.)
+                    Text(
+                        text = listeningText,
+                        color = colors.text,
+                        fontSize = if (isCompact) 14.sp else 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    // Waveform view (always show when no status text)
+                    WaveformView(
+                        amplitude = amplitude,
+                        isActive = isRecording || isPlaying,
+                        color = colors.waveform,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(if (isCompact) 60.dp else 80.dp)
+                    )
+                }
+            }
+
+            // Close button (right)
             Card(
                 shape = RoundedCornerShape(32.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.secondary),

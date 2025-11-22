@@ -25,6 +25,7 @@ import com.vika.sdk.network.exceptions.NetworkException
 import com.vika.sdk.network.exceptions.SecurityException
 import com.vika.sdk.network.models.ConversationProcessedEvent
 import com.vika.sdk.network.models.ConversationResponse
+import com.vika.sdk.network.models.TranscriptionCompletedEvent
 import com.vika.sdk.network.socket.SocketEventListener
 import com.vika.sdk.network.socket.SocketManager
 import com.vika.sdk.security.LicenseValidator
@@ -125,7 +126,7 @@ class VikaSDK private constructor(
         SocketManager(config)
     }
 
-    private val sessionManager = SessionManager()
+    private val sessionManager = SessionManager(context)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -274,6 +275,13 @@ class VikaSDK private constructor(
                 logDebug("Socket disconnected")
             }
 
+            override fun onTranscriptionCompleted(event: TranscriptionCompletedEvent) {
+                logDebug("Transcription completed: ${event.conversationId}")
+                scope.launch {
+                    conversationListener?.onTranscriptionCompleted(event)
+                }
+            }
+
             override fun onConversationProcessed(event: ConversationProcessedEvent) {
                 logDebug("Conversation processed: ${event.conversationId}")
                 scope.launch {
@@ -413,6 +421,14 @@ class VikaSDK private constructor(
      * Listener interface for conversation processing results.
      */
     interface ConversationListener {
+        /**
+         * Called when transcription is completed.
+         * This is called before onConversationProcessed.
+         *
+         * @param event The transcription result with conversation ID
+         */
+        fun onTranscriptionCompleted(event: TranscriptionCompletedEvent)
+
         /**
          * Called when a conversation has been processed.
          *
@@ -638,6 +654,15 @@ class VikaSDK private constructor(
      */
     fun getLanguage(): VikaLanguage {
         return config.language
+    }
+
+    /**
+     * Get the current session ID.
+     *
+     * @return Session ID or null if not initialized
+     */
+    fun getSessionId(): String? {
+        return sessionManager.getSessionId()
     }
 
     /**

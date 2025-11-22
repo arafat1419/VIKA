@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.vika.sdk.BuildConfig
 import com.vika.sdk.models.SDKConfig
 import com.vika.sdk.network.models.ConversationProcessedEvent
+import com.vika.sdk.network.models.TranscriptionCompletedEvent
 import com.vika.sdk.utils.SafeLogger
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -34,6 +35,7 @@ internal class SocketManager(
         private const val EVENT_DISCONNECT = Socket.EVENT_DISCONNECT
         private const val EVENT_CONNECT_ERROR = Socket.EVENT_CONNECT_ERROR
         private const val EVENT_CONNECTED = "connected"
+        private const val EVENT_TRANSCRIPTION_COMPLETED = "transcription_completed"
         private const val EVENT_CONVERSATION_PROCESSED = "conversation_processed"
     }
 
@@ -67,6 +69,7 @@ internal class SocketManager(
                 on(EVENT_DISCONNECT, onDisconnect)
                 on(EVENT_CONNECT_ERROR, onConnectError)
                 on(EVENT_CONNECTED, onConnected)
+                on(EVENT_TRANSCRIPTION_COMPLETED, onTranscriptionCompleted)
                 on(EVENT_CONVERSATION_PROCESSED, onConversationProcessed)
             }
 
@@ -150,6 +153,21 @@ internal class SocketManager(
             }
         } else {
             listener?.onConnected(sessionId ?: "")
+        }
+    }
+
+    private val onTranscriptionCompleted = Emitter.Listener { args ->
+        SafeLogger.d(TAG, "Socket 'transcription_completed' event received")
+        if (args.isNotEmpty()) {
+            try {
+                val jsonData = args[0].toString()
+                SafeLogger.d(TAG, "Transcription data: $jsonData")
+                val event = gson.fromJson(jsonData, TranscriptionCompletedEvent::class.java)
+                listener?.onTranscriptionCompleted(event)
+            } catch (e: Exception) {
+                SafeLogger.e(TAG, "Failed to parse transcription result", e)
+                listener?.onError("Failed to parse transcription result: ${e.message}")
+            }
         }
     }
 

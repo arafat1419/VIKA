@@ -60,6 +60,7 @@ dependencies {
     api(libs.androidx.appcompat)
     api(libs.material)
     api(libs.androidx.lifecycle.runtime.ktx)
+    api(libs.androidx.lifecycle.viewmodel.compose)
     api(libs.androidx.ui)
     api(libs.androidx.ui.graphics)
     api(libs.androidx.ui.tooling.preview)
