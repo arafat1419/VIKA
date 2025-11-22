@@ -21,21 +21,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Emergency
-import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Headset
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MedicalServices
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.QueuePlayNext
-import androidx.compose.material.icons.filled.Report
-import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -54,7 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -120,45 +107,33 @@ fun HomeTopBar(
 
 @Composable
 fun UserGreetingCard(modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier
+    Row(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .shadow(4.dp, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.greeting_hi),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.member_status),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
+        Column {
             Text(
-                text = stringResource(R.string.version, "1.0"),
-                style = MaterialTheme.typography.bodySmall,
+                text = stringResource(R.string.greeting_hi),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.member_status),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        Text(
+            text = stringResource(R.string.version, "1.0.0"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -182,22 +157,15 @@ fun QueueCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.QueuePlayNext,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = Color.White
-                )
-            }
+            Icon(
+                painter = painterResource(id = R.drawable.antrean_online),
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = Color.Unspecified
+            )
 
             Column(
                 modifier = Modifier.weight(1f)
@@ -247,35 +215,41 @@ fun QueueCard(
 data class GridMenuItem(
     val id: Int,
     val title: String,
-    val icon: ImageVector,
+    val iconRes: Int,
     val hasNewBadge: Boolean = false
 )
 
 @Composable
 fun getGridMenuItems(): List<GridMenuItem> {
     return listOf(
-        GridMenuItem(1, stringResource(R.string.menu_info_program), Icons.Filled.Info),
-        GridMenuItem(2, stringResource(R.string.menu_telehealth), Icons.Filled.VideoCall),
-        GridMenuItem(3, stringResource(R.string.menu_service_history), Icons.Filled.History),
+        GridMenuItem(1, stringResource(R.string.menu_info_program), R.drawable.info_program_jkn),
+        GridMenuItem(2, stringResource(R.string.menu_telehealth), R.drawable.telehealth),
         GridMenuItem(
-            4,
-            stringResource(R.string.menu_bugar),
-            Icons.Filled.FitnessCenter,
-            hasNewBadge = true
+            3,
+            stringResource(R.string.menu_service_history),
+            R.drawable.info_riwayat_pelayanan
+        ),
+        GridMenuItem(4, stringResource(R.string.menu_bugar), R.drawable.bugar),
+        GridMenuItem(5, stringResource(R.string.menu_rehab), R.drawable.rehap),
+        GridMenuItem(
+            6,
+            stringResource(R.string.menu_add_participant),
+            R.drawable.penambahan_peserta
+        ),
+        GridMenuItem(7, stringResource(R.string.menu_participant_info), R.drawable.info_peserta),
+        GridMenuItem(8, stringResource(R.string.menu_sos), R.drawable.sos),
+        GridMenuItem(
+            9,
+            stringResource(R.string.menu_facility_location),
+            R.drawable.info_lokasi_faskes
         ),
         GridMenuItem(
-            5,
-            stringResource(R.string.menu_rehab),
-            Icons.Filled.MedicalServices,
-            hasNewBadge = true
+            10,
+            stringResource(R.string.menu_data_change),
+            R.drawable.perubahan_data_peserta
         ),
-        GridMenuItem(6, stringResource(R.string.menu_add_participant), Icons.Filled.PersonAdd),
-        GridMenuItem(7, stringResource(R.string.menu_participant_info), Icons.Filled.Badge),
-        GridMenuItem(8, stringResource(R.string.menu_sos), Icons.Filled.Emergency),
-        GridMenuItem(9, stringResource(R.string.menu_facility_location), Icons.Filled.LocationOn),
-        GridMenuItem(10, stringResource(R.string.menu_data_change), Icons.Filled.Edit),
-        GridMenuItem(11, stringResource(R.string.menu_complaint), Icons.Filled.Report),
-        GridMenuItem(12, stringResource(R.string.menu_other), Icons.Filled.MoreHoriz)
+        GridMenuItem(11, stringResource(R.string.menu_complaint), R.drawable.pengaduan_layanan),
+        GridMenuItem(12, stringResource(R.string.menu_other), R.drawable.menu_lainnya)
     )
 }
 
@@ -324,10 +298,10 @@ fun MenuGridItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = item.icon,
+                    painter = painterResource(id = item.iconRes),
                     contentDescription = item.title,
-                    modifier = Modifier.size(28.dp),
-                    tint = Color(0xFF616161)
+                    modifier = Modifier.size(32.dp),
+                    tint = Color.Unspecified
                 )
             }
 

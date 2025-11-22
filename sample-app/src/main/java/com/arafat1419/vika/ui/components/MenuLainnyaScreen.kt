@@ -17,19 +17,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.AppRegistration
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoMode
-import androidx.compose.material.icons.filled.Bed
-import androidx.compose.material.icons.filled.HealthAndSafety
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.MedicalServices
-import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -185,31 +173,47 @@ fun getMenuLainnyaItems(): List<GridMenuItem> {
         GridMenuItem(
             13,
             stringResource(R.string.menu_health_screening),
-            Icons.Filled.HealthAndSafety
+            R.drawable.skrining_riwayat_kesehatan
         ),
         GridMenuItem(
             14,
             stringResource(R.string.menu_service_registration),
-            Icons.Filled.AppRegistration
+            R.drawable.pendaftaran_pelayanan
         ),
-        GridMenuItem(15, stringResource(R.string.menu_bed_availability), Icons.Filled.Bed),
+        GridMenuItem(
+            15,
+            stringResource(R.string.menu_bed_availability),
+            R.drawable.info_ketersediaan_tempat_tidur
+        ),
         GridMenuItem(
             16,
             stringResource(R.string.menu_surgery_schedule),
-            Icons.Filled.MedicalServices
+            R.drawable.info_jadwal_tindakan_operasi
         ),
-        GridMenuItem(17, stringResource(R.string.menu_contribution_info), Icons.Filled.Receipt),
-        GridMenuItem(18, stringResource(R.string.menu_auto_debit), Icons.Filled.AutoMode),
-        GridMenuItem(19, stringResource(R.string.menu_payment_history), Icons.Filled.History),
+        GridMenuItem(17, stringResource(R.string.menu_contribution_info), R.drawable.info_iuran),
+        GridMenuItem(
+            18,
+            stringResource(R.string.menu_auto_debit),
+            R.drawable.pendaftaran_auto_debit
+        ),
+        GridMenuItem(
+            19,
+            stringResource(R.string.menu_payment_history),
+            R.drawable.info_riwayat_pembayaran
+        ),
         GridMenuItem(
             20,
             stringResource(R.string.menu_virtual_account),
-            Icons.Filled.AccountBalance
+            R.drawable.info_virtual_account
         ),
-        GridMenuItem(21, stringResource(R.string.menu_medication), Icons.Filled.Medication),
-        GridMenuItem(22, stringResource(R.string.menu_disease_trend), Icons.Filled.ShowChart),
-        GridMenuItem(23, stringResource(R.string.menu_mobile_bpjs), Icons.Filled.LocalShipping),
-        GridMenuItem(24, stringResource(R.string.menu_ecommerce), Icons.Filled.ShoppingCart)
+        GridMenuItem(21, stringResource(R.string.menu_medication), R.drawable.minum_obat),
+        GridMenuItem(
+            22,
+            stringResource(R.string.menu_disease_trend),
+            R.drawable.tren_penyakit_daerah
+        ),
+        GridMenuItem(23, stringResource(R.string.menu_mobile_bpjs), R.drawable.antrean_online),
+        GridMenuItem(24, stringResource(R.string.menu_ecommerce), R.drawable.antrean_online)
     )
 }
 

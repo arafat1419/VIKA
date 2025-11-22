@@ -31,12 +31,29 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="sample" />
-                <data android:host="home" />
-                <data android:host="products" />
-                <data android:host="product" />
-                <data android:host="cart" />
-                <data android:host="profile" />
+                <data android:scheme="bpjskes" />
+                <data android:host="info_program_jkn" />
+                <data android:host="telehealth" />
+                <data android:host="info_riwayat_pelayanan" />
+                <data android:host="bugar" />
+                <data android:host="new_rehap" />
+                <data android:host="penambahan_peserta" />
+                <data android:host="info_peserta" />
+                <data android:host="sos" />
+                <data android:host="info_lokasi_faskes" />
+                <data android:host="perubahan_data_peserta" />
+                <data android:host="pengaduan_layanan_jkn" />
+                <data android:host="skrining_riwayat_kesehatan" />
+                <data android:host="pendaftaran_pelayanan" />
+                <data android:host="info_ketersediaan_tempat_tidur" />
+                <data android:host="info_jadwal_tindakan_operasi" />
+                <data android:host="info_iuran" />
+                <data android:host="pendaftaran_auto_debit" />
+                <data android:host="info_riwayat_pembayaran" />
+                <data android:host="info_virtual_account" />
+                <data android:host="minum_obat" />
+                <data android:host="tren_penyakit_daerah" />
+                <data android:host="antrean_online" />
             </intent-filter>
         </activity>
     </application>

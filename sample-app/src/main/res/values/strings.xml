@@ -10,7 +10,7 @@
 
     <!-- Home Screen -->
     <string name="greeting_hi">Hi, Mohammad</string>
-    <string name="member_status">Anggota Keluarga Non Aktif</string>
+    <string name="member_status">Anggota Keluarga Aktif</string>
     <string name="version">Version %s</string>
     <string name="notification_desc">Notifikasi</string>
     <string name="cs_desc">Customer Service</string>
