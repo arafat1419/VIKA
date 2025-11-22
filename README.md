@@ -59,8 +59,13 @@ dependencyResolutionManagement {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/arafat1419/VIKA")
             credentials {
-                username = providers.gradleProperty("github.user").orNull ?: System.getenv("GITHUB_ACTOR")
-                password = providers.gradleProperty("github.token").orNull ?: System.getenv("GITHUB_TOKEN")
+                val localProperties = java.util.Properties()
+                val localPropertiesFile = File(rootDir, "local.properties")
+                if (localPropertiesFile.exists()) {
+                    localPropertiesFile.inputStream().use { localProperties.load(it) }
+                }
+                username = localProperties.getProperty("github.user") ?: System.getenv("GITHUB_ACTOR")
+                password = localProperties.getProperty("github.token") ?: System.getenv("GITHUB_TOKEN")
             }
         }
     }
