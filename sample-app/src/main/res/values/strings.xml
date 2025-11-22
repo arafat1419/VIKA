@@ -1,3 +1,76 @@
 <resources>
     <string name="app_name">VIKA</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_berita">Berita</string>
+    <string name="nav_kartu">Kartu</string>
+    <string name="nav_faq">FAQ</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Home Screen -->
+    <string name="greeting_hi">Hi, Mohammad</string>
+    <string name="member_status">Anggota Keluarga Non Aktif</string>
+    <string name="version">Version %s</string>
+    <string name="notification_desc">Notifikasi</string>
+    <string name="cs_desc">Customer Service</string>
+
+    <!-- Queue Card -->
+    <string name="queue_title">Antrean Online</string>
+    <string name="queue_description">Untuk kunjungan lebih efisien tanpa harus menunggu lama.</string>
+    <string name="queue_button">Ambil Antrian</string>
+
+    <!-- Grid Menu Items -->
+    <string name="menu_info_program">Info Program JKN</string>
+    <string name="menu_telehealth">TELEHEALTH</string>
+    <string name="menu_service_history">Info Riwayat Pelayanan</string>
+    <string name="menu_bugar">Bugar</string>
+    <string name="menu_rehab">NEW Rehab (Cicilan)</string>
+    <string name="menu_add_participant">Penambahan Peserta</string>
+    <string name="menu_participant_info">Info Peserta</string>
+    <string name="menu_sos">SOS</string>
+    <string name="menu_facility_location">Info Lokasi Faskes</string>
+    <string name="menu_data_change">Perubahan Data Peserta</string>
+    <string name="menu_complaint">Pengaduan Layanan JKN</string>
+    <string name="menu_other">Menu Lainnya</string>
+
+    <!-- Slider -->
+    <string name="slider_item">Banner %d</string>
+
+    <!-- Placeholder Screens -->
+    <string name="berita_title">Berita</string>
+    <string name="berita_description">Informasi dan berita terkini seputar JKN</string>
+
+    <string name="kartu_title">Kartu</string>
+    <string name="kartu_description">Informasi kartu JKN Anda</string>
+
+    <string name="faq_title">FAQ</string>
+    <string name="faq_description">Pertanyaan yang sering diajukan</string>
+
+    <string name="profile_title">Profile</string>
+    <string name="profile_description">Informasi profil dan pengaturan akun</string>
+
+    <!-- Menu Lainnya Screen -->
+    <string name="menu_lainnya_title">Menu Lainnya</string>
+    <string name="section_menu_pilihanmu">Menu Pilihanmu</string>
+    <string name="section_menu_lainnya">Menu Lainnya</string>
+    <string name="edit">Edit</string>
+
+    <!-- Menu Lainnya Items -->
+    <string name="menu_health_screening">Skrinning Riwayat Kesehatan</string>
+    <string name="menu_service_registration">Pendaftaran Pelayanan (Antrean)</string>
+    <string name="menu_bed_availability">Info Ketersediaan Tempat Tidur</string>
+    <string name="menu_surgery_schedule">Info Jadwal Tindakan Operasi</string>
+    <string name="menu_contribution_info">Info Iuran</string>
+    <string name="menu_auto_debit">Pendaftaran Auto Debit</string>
+    <string name="menu_payment_history">Info Riwayat Pembayaran</string>
+    <string name="menu_virtual_account">Info Virtual Account</string>
+    <string name="menu_medication">Minum Obat</string>
+    <string name="menu_disease_trend">Tren Penyakit Daerah</string>
+    <string name="menu_mobile_bpjs">BPJS Keliling</string>
+    <string name="menu_ecommerce">E-Commerce</string>
+
+    <!-- Common -->
+    <string name="content_description_icon">Icon</string>
+    <string name="back">Kembali</string>
 </resources>
