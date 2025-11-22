@@ -58,12 +58,23 @@ dependencyResolutionManagement {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/arafat1419/VIKA")
+            credentials {
+                username = providers.gradleProperty("github.user").orNull ?: System.getenv("GITHUB_ACTOR")
+                password = providers.gradleProperty("github.token").orNull ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
 }
 ```
 
-> **Note:** No authentication required! The SDK is now publicly accessible.
+Create or update `local.properties` in your project root (this file is already in `.gitignore`):
+
+```properties
+github.user=your-github-username
+github.token=your-github-personal-access-token
+```
+
+> **Note:** GitHub Packages requires authentication even for public repositories. Create a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with `read:packages` scope.
 
 #### Step 2: Add Dependency
 

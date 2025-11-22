@@ -16,6 +16,15 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/arafat1419/VIKA")
+            credentials {
+                username = providers.gradleProperty("github.user").orNull ?: System.getenv("GITHUB_ACTOR")
+                password = providers.gradleProperty("github.token").orNull ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 

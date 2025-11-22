@@ -46,7 +46,6 @@ dependencies {
     // VIKA SDK from GitHub Packages
     // All dependencies are automatically resolved!
     implementation(libs.vika.sdk)
-//    implementation(project(":VikaSDK"))
 
     // App Dependencies
     implementation(libs.androidx.core.ktx)
