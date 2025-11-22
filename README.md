@@ -58,24 +58,12 @@ dependencyResolutionManagement {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/arafat1419/VIKA")
-            credentials {
-                username = project.findProperty("github.user") as String?
-                password = project.findProperty("github.token") as String?
-            }
         }
     }
 }
 ```
 
-Create or update `local.properties` in your project root:
-
-```properties
-github.user=your-github-username
-github.token=your-github-personal-access-token
-```
-
-> **Note:** GitHub Packages requires authentication even for public repositories. Create
-> a [GitHub Personal Access Token](https://github.com/settings/tokens/new) with `read:packages` scope.
+> **Note:** No authentication required! The SDK is now publicly accessible.
 
 #### Step 2: Add Dependency
 
@@ -83,7 +71,7 @@ Add to your app's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.vika.sdk:vika-sdk:1.0.2")
+    implementation("com.vika.sdk:vika-sdk:1.0.3")
 }
 ```
 
@@ -110,7 +98,11 @@ The `sample-app` uses the local `:VikaSDK` module, so no external authentication
 > **⚠️ IMPORTANT:** VIKA currently **only works with deep links**. You must implement deep link
 > navigation for VIKA to function. See the `sample-app` module for a complete working example.
 
-#### 1. Initialize SDK
+#### 1. Get API Key
+
+Get your API key from [https://vika-ng.ekoptra.com/](https://vika-ng.ekoptra.com/)
+
+#### 2. Initialize SDK
 
 ```kotlin
 val config = SDKConfig.Builder("YOUR_API_KEY")
@@ -121,7 +113,7 @@ val config = SDKConfig.Builder("YOUR_API_KEY")
 VikaSDK.initialize(this, config) { /* SDK ready */ }
 ```
 
-#### 2. Register Screens
+#### 3. Register Screens
 
 ```kotlin
 val screens = listOf(
@@ -137,12 +129,12 @@ val screens = listOf(
 VikaSDK.getInstance().registerScreens(screens)
 ```
 
-#### 3. Setup Deep Links
+#### 4. Setup Deep Links
 
 Configure deep links in `AndroidManifest.xml` and handle them in your Activity. See `sample-app/`
 for complete implementation.
 
-#### 4. Open VIKA
+#### 5. Open VIKA
 
 ```kotlin
 VikaSDK.getInstance().openVikaSDK(context)
@@ -196,10 +188,9 @@ VikaSDK.getInstance().openVikaSDK(context)
 
 **Security Best Practices:**
 
-- Never commit `local.properties` (already in `.gitignore`)
-- Rotate GitHub tokens every 90 days
-- Use read-only tokens for client access
 - Store API keys securely (BuildConfig or encrypted storage)
+- Never hardcode API keys in your source code
+- Use ProGuard/R8 to obfuscate your code in production
 
 ## Sample App
 
@@ -241,7 +232,13 @@ For licensing inquiries, contact the VIKA team.
 
 ## Changelog
 
-### Version 1.0.2 (Current)
+### Version 1.0.3 (Current)
+
+**Changes:**
+
+- Updated SDK version for GitHub Packages release
+
+### Version 1.0.2
 
 **Changes:**
 
