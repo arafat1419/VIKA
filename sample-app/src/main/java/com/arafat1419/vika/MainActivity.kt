@@ -80,6 +80,7 @@ import com.arafat1419.vika.ui.components.UserGreetingCard
 import com.arafat1419.vika.ui.theme.VIKATheme
 import com.vika.sdk.VikaSDK
 import com.vika.sdk.models.VikaDisplayMode
+import com.vika.sdk.models.VikaThemeConfig
 import com.vika.sdk.models.VikaUIOptions
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -172,8 +173,9 @@ fun SampleApp(navController: NavHostController) {
                         val options = VikaUIOptions.builder()
                             .displayMode(VikaDisplayMode.DIALOG)
                             .appLogo(R.mipmap.ic_launcher)
-                            .appTitle("Sample App")
+                            .appTitle(context.getString(R.string.app_name))
                             .dismissOnTouchOutside(true)
+                            .theme(VikaThemeConfig.DEFAULT_LIGHT)
                             .build()
                         sdk.openVikaSDK(context, options)
                     }
@@ -654,7 +656,6 @@ fun InfoLokasiScreen(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 32.dp)
                 ) {
                     Text(
                         text = "Fasilitas Kesehatan Terdekat",
@@ -663,10 +664,17 @@ fun InfoLokasiScreen(navController: NavHostController) {
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-                    // Facility list
-                    facilities.forEach { facility ->
-                        FacilityCard(facility = facility)
-                        Spacer(modifier = Modifier.height(12.dp))
+                    // Scrollable facility list
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 32.dp)
+                    ) {
+                        facilities.forEach { facility ->
+                            FacilityCard(facility = facility)
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
                     }
                 }
             }

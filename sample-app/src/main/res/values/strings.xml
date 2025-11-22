@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VIKA</string>
+    <string name="app_name">Mobile JKN Clone</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">Home</string>
